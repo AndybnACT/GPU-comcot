@@ -1,0 +1,34 @@
+# object files
+comcot
+GPUcomcot.o
+GPUMass_s.o
+GPUMoment_s.o
+GPUOpen_BD.o
+GPUOutput.o
+nvobj.o
+type_module.o
+comcot.o
+initialization.o
+output.o
+deform.o
+mass.o
+moment.o
+boundaries.o
+all_grids.o
+hotstart.o
+landslide.o
+wavemaker.o
+dispersion.o
+# data files temporary files
+SIMULATION_INFO.TXT
+arrival_*.dat
+z_[0-9][0-9]_*.dat
+M1Layer*.txt
+[fhijmnvz]max_layer*.dat
+layer*.dat
+ts_record*.dat
+zmin_layer*.dat
+deform_seg[0-9][0-9][0-9].dat
+*_[0-9][0-9]_*.dat
+*.xyz
+*.swp
