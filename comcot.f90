@@ -396,7 +396,7 @@
 
 
 !.......UPDATE VARIABLES OF LAYER 01 (LO) FOR NEXT TIME STEP
-         CALL CHANGE(LO)
+         CALL CHANGE()
 !.......OUTPUT TIME SEQUENCE AND TIME HISTORY RECORDS AT T = K*LO%DT
 !!!!!!!!!!!!!!!!!!!!      COMMEMT ADDED BY TAO     !!!!!!!!!!!!!!!!!!!!!!!!!!
 !          WRITE (99,*) TIME                                                !
@@ -445,13 +445,13 @@
 
 
 !----------------------------------------------------------------------
-      SUBROUTINE CHANGE(LO)
+      SUBROUTINE CHANGE()
 !.....TRANSFER INFORMATION (FREE SURFACE ELEVATION, VOLUME FLUX IN
 !      X, Y DIRECTIONS)FROM LAST STEP TO NEXT STEP (FOR OUTEST LAYER)
 !----------------------------------------------------------------------
 !!!!!!!!!!!!!!!!!!!!      COMMEMT ADDED BY TAO     !!!!!!!!!!!!!!!!!!!!!!!!!!
-    ! USE LAYER_PARAMS
-    ! TYPE (LAYER)	:: LO
+!     USE LAYER_PARAMS
+!     TYPE (LAYER)	:: LO
 !       IF (LO%LAYGOV .GT. 1) THEN
 !           LO%M0(:,:)   = LO%M(:,:,1)
 !           LO%N0(:,:) = LO%N(:,:,1)

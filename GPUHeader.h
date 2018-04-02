@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "cuda.h"
 #include <time.h>
+#define float double
 
 //#define DEBUG
 #ifdef DEBUG

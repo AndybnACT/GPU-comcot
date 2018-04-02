@@ -1696,7 +1696,8 @@
       INTEGER	   :: LENGTH, RC !, FLAG
 	  INTEGER  NX,NY
 	  REAL DX,DY
-	  REAL,ALLOCATABLE :: H(:,:),TMP(:,:),X(:),Y(:)
+	  REAL(kind=8),ALLOCATABLE :: H(:,:),TMP(:,:)
+      REAL, ALLOCATABLE :: X(:),Y(:)
       CHARACTER(LEN=20) FNAME
 	  COMMON /CONS/ ELMAX,GRAV,PI,R_EARTH,GX,EPS,ZERO,ONE,NUM_GRID,	&
 					NUM_FLT,V_LIMIT,RAD_DEG,RAD_MIN
@@ -1795,7 +1796,8 @@
       TYPE (LAYER) :: LO
       INTEGER      :: STAT, IS, JS, I, J, NX, NY
       INTEGER	   :: LENGTH, RC, POS !, FLAG
-	  REAL,ALLOCATABLE :: H(:,:),TMP(:,:),X(:),Y(:),YTMP(:)
+	  REAL(kind=8),ALLOCATABLE :: H(:,:),TMP(:,:)
+      REAL, ALLOCATABLE :: X(:),Y(:),YTMP(:)
 !      CHARACTER(LEN) FNAME
 	  COMMON /CONS/ ELMAX,GRAV,PI,R_EARTH,GX,EPS,ZERO,ONE,NUM_GRID,	&
 					NUM_FLT,V_LIMIT,RAD_DEG,RAD_MIN
@@ -1884,7 +1886,7 @@
 !----------------------------------------------------------------------
       USE LAYER_PARAMS
       TYPE (LAYER) :: LO
-	  REAL,ALLOCATABLE :: HTMP(:,:),H(:,:)
+	  REAL(kind=8),ALLOCATABLE :: HTMP(:,:),H(:,:)
 	  REAL,ALLOCATABLE :: XCOL(:),YCOL(:),ZCOL(:)
 	  REAL,ALLOCATABLE :: X(:),Y(:),XTMP(:),YTMP(:)
       INTEGER      STAT, IS, JS, I, J
@@ -2080,7 +2082,7 @@
 !----------------------------------------------------------------------
       USE LAYER_PARAMS
       TYPE (LAYER) :: LO
-	  REAL,ALLOCATABLE :: HTMP(:,:),H(:,:)
+	  REAL(kind=8),ALLOCATABLE :: HTMP(:,:),H(:,:)
 	  REAL,ALLOCATABLE :: XCOL(:),YCOL(:),ZCOL(:)
 	  REAL,ALLOCATABLE :: X(:),Y(:),XTMP(:),YTMP(:)
       INTEGER      STAT, IS, JS, I, J
@@ -2276,8 +2278,9 @@
 !----------------------------------------------------------------------
       INTEGER ISTAT, IS, JS, IE, JE, I0, J0, NX, NY
 	  INTEGER IX,JY,ID
-	  REAL H(IX,JY),H_X(IX),H_Y(JY)
-	  REAL TMP(NX,NY), BATH(NX,NY)
+	  REAL(kind=8) H(IX,JY)
+      REAL H_X(IX),H_Y(JY)
+	  REAL(kind=8) TMP(NX,NY), BATH(NX,NY)
 	  REAL X(NX), Y(NY)
 	  REAL DELTA_X,DELTA_Y,CX,CY,Z1,Z2,Z3,Z4
 
@@ -2542,7 +2545,7 @@
 	  TYPE (LAYER) :: LO
 	  REAL H_MAX,SOUTH_LAT,DX,CR
 
-	  REAL,ALLOCATABLE :: HTMP(:,:),H(:,:)
+	  REAL(kind=8),ALLOCATABLE :: HTMP(:,:),H(:,:)
 	  REAL,ALLOCATABLE :: XCOL(:),YCOL(:),ZCOL(:)
 	  REAL,ALLOCATABLE :: X(:),Y(:),YTMP(:)
       INTEGER      STAT, IS, JS, I, J
@@ -2695,7 +2698,7 @@
 !----------------------------------------------------------------------
       USE LAYER_PARAMS
       TYPE (LAYER) :: LO
-	  REAL,ALLOCATABLE :: HTMP(:,:),H(:,:)
+	  REAL(kind=8),ALLOCATABLE :: HTMP(:,:),H(:,:)
 	  REAL,ALLOCATABLE :: XCOL(:),YCOL(:),ZCOL(:)
 	  REAL,ALLOCATABLE :: X(:),Y(:),XTMP(:),YTMP(:)
       INTEGER      STAT, IS, JS, I, J, NXY

@@ -865,7 +865,7 @@
 	  TYPE (LAYER), DIMENSION(NUM_GRID)  :: LA
 	  REAL SECS
 	  REAL TIME,TEND,TEMP
-	  REAL, ALLOCATABLE :: TMP(:,:)
+	  !REAL(kind=8), ALLOCATABLE :: TMP(:,:)
 	  INTEGER K,K1,KK, I, J
 	  CHARACTER(LEN=40) FNAME1,FNAME2,FNAME3
 	  CHARACTER(LEN=40) FNAME4,FNAME5,FNAME6
@@ -916,16 +916,15 @@
 	  SECS = 3600.0*K
       IF (K2.GT.K1 .OR. TIME.GE.TEND-2.0*LO%DT) THEN
          CALL CUDA_GETZMAX(LO%Z_MAX(:,:))
-		 ALLOCATE(TMP(LO%NX,LO%NY))
+		 !ALLOCATE(TMP(LO%NX,LO%NY))
 		 DO I = 1,LO%NX
 		    DO J = 1,LO%NY
 			   IF ((LO%H(I,J)+LO%Z_MAX(I,J)).LE.GX .AND. 			&
 											LO%H(I,J).LT.ZERO) THEN
-			      TMP(I,J) = 0.0
+			      LO%Z_MAX(I,J) = 0.0
 			   ELSE
-			      TMP(I,J) = LO%Z_MAX(I,J)
 				  IF (ABS(LO%TIDE_LEVEL).GT.GX) THEN
-				     TMP(I,J) = LO%Z_MAX(I,J) + LO%TIDE_LEVEL
+				     LO%Z_MAX(I,J) = LO%Z_MAX(I,J) + LO%TIDE_LEVEL
 				  ENDIF
 			   ENDIF
 		    ENDDO
@@ -935,7 +934,7 @@
          IF (TIME.GE.TEND-2.0*LO%DT) FNAME1 = 'zmax_layer01.dat'
          OPEN (25,FILE=FNAME1,STATUS='UNKNOWN')
          DO J = 1,LO%NY
-		    WRITE (25,'(15F9.4)') (TMP(I,J),I=1,LO%NX)
+		    WRITE (25,'(15F9.4)') (LO%Z_MAX(I,J),I=1,LO%NX)
          ENDDO
          CLOSE (25)
  ! !!!!!!!!!!!!!!!!!!!!      COMMEMT ADDED BY TAO     !!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -962,7 +961,7 @@
  !         CLOSE (25)
 !!!!!!!!!!!!!!!!!!!!      COMMEMT ADDED BY TAO     !!!!!!!!!!!!!!!!!!!!!!!!!!
 
-		 DEALLOCATE(TMP,STAT = ISTAT)
+		 !DEALLOCATE(TMP,STAT = ISTAT)
 !!!!!!!!!!!!!!!!!!!!      COMMEMT ADDED BY TAO     !!!!!!!!!!!!!!!!!!!!!!!!!!
  !         DO KK = 1,NUM_GRID
  !            IF (LA(KK)%LAYSWITCH .EQ. 0 ) THEN
