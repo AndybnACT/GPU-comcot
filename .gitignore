@@ -19,16 +19,26 @@ hotstart.o
 landslide.o
 wavemaker.o
 dispersion.o
-# data files temporary files
+bci_params.mod
+fault_params.mod
+fort.23
+landslide_params.mod
+layer_params.mod
+wave_params.mod
+
+# data files & temporary files
 SIMULATION_INFO.TXT
 arrival_*.dat
 z_[0-9][0-9]_*.dat
 M1Layer*.txt
 [fhijmnvz]max_layer*.dat
 layer*.dat
+ini_surface.dat
 ts_record*.dat
 zmin_layer*.dat
 deform_seg[0-9][0-9][0-9].dat
 *_[0-9][0-9]_*.dat
+time.dat
 *.xyz
 *.swp
+*.png
