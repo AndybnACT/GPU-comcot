@@ -811,10 +811,10 @@
       IF (LO%FLUXSWITCH .LE. 1 .OR. LO%FLUXSWITCH .EQ. 9) THEN
          WRITE (FNAME,1) LO%ID,K
  1       FORMAT('z_',I2.2,'_',I6.6,'.dat')
-         OPEN (25,FILE=FNAME,STATUS='UNKNOWN')
-         DO J = JS,JE
-            WRITE (25,'(15F9.4)') (Z(I,J),I=IS,IE)
-         ENDDO
+         OPEN (25,FILE=FNAME,STATUS='UNKNOWN',form="unformatted")
+         !DO J = JS,JE
+            WRITE (25) (Z(:,:))!(I,J),I=IS,IE)
+         !ENDDO
          CLOSE (25)
 	  ENDIF
 !.....OUTPUT VOLUME FLUX
@@ -822,28 +822,28 @@
          WRITE (FNAME,2) LO%ID,K
  2       FORMAT('m_',I2.2,'_',I6.6,'.dat')
 
-         OPEN (25,FILE=FNAME,STATUS='UNKNOWN')
-         DO J = JS,JE
-           WRITE (25,'(15F9.3)') (LO%M(I,J,1),I=IS,IE)
-         ENDDO
+         OPEN (25,FILE=FNAME,STATUS='UNKNOWN',form="unformatted")
+         !DO J = JS,JE
+           WRITE (25) (LO%M(:,:,1))!(I,J,1),I=IS,IE)
+         !ENDDO
          CLOSE (25)
          WRITE (FNAME,3) LO%ID,K
  3       FORMAT('n_',I2.2,'_',I6.6,'.dat')
 
-         OPEN (25,FILE=FNAME,STATUS='UNKNOWN')
-         DO J = JS,JE
-           WRITE (25,'(15F9.3)') (LO%N(I,J,1),I=IS,IE)
-         ENDDO
+         OPEN (25,FILE=FNAME,STATUS='UNKNOWN',form="unformatted")
+         !DO J = JS,JE
+           WRITE (25) (LO%N(:,:,1))!(I,J,1),I=IS,IE)
+         !ENDDO
          CLOSE (25)
 	  ENDIF
 
 	  IF (LO%SEDI_SWITCH .EQ. 0) THEN
          WRITE (FNAME,4) LO%ID,K
  4       FORMAT('s_',I2.2,'_',I6.6,'.dat')
-         OPEN (25,FILE=FNAME,STATUS='UNKNOWN')
-         DO J = JS,JE
-            WRITE (25,'(15F9.3)') (LO%DH(I,J,2),I=IS,IE)
-         ENDDO
+         OPEN (25,FILE=FNAME,STATUS='UNKNOWN',form="unformatted")
+         !DO J = JS,JE
+            WRITE (25) (LO%DH(:,:,2))!(I,J,2),I=IS,IE)
+         !ENDDO
          CLOSE (25)
       ENDIF
 
@@ -933,10 +933,10 @@
          WRITE (FNAME1,1) LO%ID,K
  1       FORMAT('zmax_layer',I2.2,'_',I4.4,'hrs.dat')
          IF (TIME.GE.TEND-2.0*LO%DT) FNAME1 = 'zmax_layer01.dat'
-         OPEN (25,FILE=FNAME1,STATUS='UNKNOWN')
-         DO J = 1,LO%NY
-		    WRITE (25,'(15F9.4)') (TMP(I,J),I=1,LO%NX)
-         ENDDO
+         OPEN (25,FILE=FNAME1,STATUS='UNKNOWN',form="unformatted")
+         !DO J = 1,LO%NY
+		    WRITE (25) (TMP(:,:))!(I,J),I=1,LO%NX)
+         !ENDDO
          CLOSE (25)
  ! !!!!!!!!!!!!!!!!!!!!      COMMEMT ADDED BY TAO     !!!!!!!!!!!!!!!!!!!!!!!!!!
 	! 	 DO I = 1,LO%NX
