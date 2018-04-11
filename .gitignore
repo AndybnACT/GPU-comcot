@@ -26,10 +26,12 @@ z_[0-9][0-9]_*.dat
 M1Layer*.txt
 [fhijmnvz]max_layer*.dat
 layer*.dat
+ini_surface.dat
 ts_record*.dat
 zmin_layer*.dat
 deform_seg[0-9][0-9][0-9].dat
 *_[0-9][0-9]_*.dat
+time.dat
 *.xyz
 *.swp
 *.png
