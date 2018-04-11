@@ -9,10 +9,10 @@
 #===============================================:===============================
 #Job Description: NZ30sec bathymetry, Spherical Coordinates for code testing
  Total run time (Wall clock, seconds)           :   86400.0
- Time interval to Save Data    ( unit: sec )    :   300.0
+ Time interval to Save Data    ( unit: sec )    :   3600.0
  Output Zmax & TS (0-Max Z;1-Timeseries;2-Both) :     2
  Start Type (0-Cold start; 1-Hot start)         :     0
- Resuming Time If hot start (Seconds)           :  1000.00
+ Resuming Time If hot start (Seconds)           :  100000000000000.00
  Specify Min WaterDepth offshore  (meter)       :     10.00
  Initial Cond. (0:FLT,1:File,2:WM,3:LS,4:FLT+LS):     0
  Specify BC  (0-Open;1-Sponge;2-Wall;3-FACTS)   :     0
@@ -76,7 +76,7 @@
  X_end                                          :  300.0
  Y_Start                                        :   -56.0
  Y_end                                          :   63.0
- File Name of Bathymetry Data                   :etopo_halk2.xyz
+ File Name of Bathymetry Data                   :../etopo_halk2.xyz
  Data Format Option (0-OLD;1-MOST;2-XYZ;3-ETOPO):     3
  Grid Identification Number                     :    01
  Grid Level                                     :     1

@@ -19,7 +19,7 @@ hotstart.o
 landslide.o
 wavemaker.o
 dispersion.o
-# data files temporary files
+# data files & temporary files
 SIMULATION_INFO.TXT
 arrival_*.dat
 z_[0-9][0-9]_*.dat
@@ -32,3 +32,6 @@ deform_seg[0-9][0-9][0-9].dat
 *_[0-9][0-9]_*.dat
 *.xyz
 *.swp
+*.png
+.metadata/*
+RemoteSystemsTempFiles/*
