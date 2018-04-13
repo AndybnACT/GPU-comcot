@@ -19,6 +19,11 @@ hotstart.o
 landslide.o
 wavemaker.o
 dispersion.o
+bci_params.mod
+fault_params.mod
+landslide_params.mod
+layer_params.mod
+wave_params.mod
 # data files & temporary files
 SIMULATION_INFO.TXT
 arrival_*.dat

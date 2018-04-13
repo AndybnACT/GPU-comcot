@@ -26,9 +26,8 @@ extern "C" void momt_launch_(float *M_f, float *N_f, float *Z_f /*FUTURE: delete
         }
 
     #endif
-    // cudaCHK( cudaMemcpy(Zout_hst, Z_f, size_hst[3], cudaMemcpyHostToDevice) );// FUTURE: delete
-    // cudaCHK( cudaMemcpy(H_hst, H_f, size_hst[3], cudaMemcpyHostToDevice) );
-    // kernel launch
+
+    // // kernel launch
     // st = clock();
     // momts_kernel <<< DimGridMomt, DimBlockMomt >>> (Zout_hst, MNdat_hst, R24_hst, R35_hst, H_hst);
     // cudaDeviceSynchronize();
