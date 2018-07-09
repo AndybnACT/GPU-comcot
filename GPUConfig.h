@@ -15,7 +15,7 @@
      extern dim3 DimBlockMomt;
      extern dim3 DimGridMomt;
 
-     #define BLOCKX_MOMT 64
+     #define BLOCKX_MOMT 512
      extern dim3 DimBlockMomt_MN;
      extern dim3 DimGridMomt_MN;
 #endif

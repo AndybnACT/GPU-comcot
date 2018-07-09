@@ -1,5 +1,6 @@
 from mpl_toolkits.basemap import Basemap
 from sys import argv
+from time import sleep
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as npy
@@ -10,10 +11,28 @@ class COMCOTdat(object):
     Import comcot data from .dat files
 
     """
-    def __init__(self, BASE_DIR, Layer=1):
+    def __init__(self, BASE_DIR, Layer=1,busywaitmode=False):
         super(COMCOTdat, self).__init__()
+        self._layer = Layer
         if BASE_DIR[-1] != '/':
             BASE_DIR+='/'
+        self._basedir = BASE_DIR
+        # check files
+        mapfiles = ["layer%02d_x.dat" % Layer,
+                    "layer%02d_y.dat" % Layer,
+                    "layer%02d.dat" % Layer]
+        while busywaitmode:
+            lsfiles  = listdir(BASE_DIR)
+            nrfile = 0
+            for tmpfname in mapfiles:
+                if tmpfname in lsfiles:
+                        nrfile += 1
+            if nrfile == 3:
+                break
+            elif nrfile == 0:
+                sleep(3)
+        sleep(3) #BUG temporary solution to race condition on file being wrtten by comcot and read by python at the same time
+                 #FUTURE
         # import data
         self._x = self.ReadFile(BASE_DIR+ "layer%02d_x.dat" % Layer)
         self._y = self.ReadFile(BASE_DIR+ "layer%02d_y.dat" % Layer)
@@ -24,13 +43,16 @@ class COMCOTdat(object):
         self._etaname.sort()
         self._eta = {}
         for timestrig in self._etaname:
-            minute = int(timestrig[5:-4])
-            masked = npy.ma.masked_where(self._z < 0, self.ReadFile(timestrig, dim=True, binary=True))
-            self._eta.update({minute:masked})
+            self.Read_eta(timestrig)
         # self._arri = self.ReadFile(BASE_DIR+ "arrival_layer%02d.dat" % Layer,dim = True)
 
-
         [self._xx, self._yy] = npy.meshgrid(self._x,self._y)
+
+
+    def Read_eta(self, filename):
+        minute = int(filename[5:-4])
+        masked = npy.ma.masked_where(self._z < 0, self.ReadFile(filename, dim=True, binary=True))
+        self._eta.update({minute:masked})
 
     def ReadFile(self,filename,dim=False , binary=False):
         print("Reading File %s" % filename)
@@ -56,6 +78,12 @@ class COMCOTdat(object):
             print("Error, File < %s > Not Found" % e.filename)
             raise
 
+    def Update_eta(self):
+        tmpfilename = [i for i in listdir(self._basedir) if i[:4]=='z_%02d' % self._layer]
+        for tmp in tmpfilename:
+            if tmp not in self._etaname:
+                self.Read_eta(tmp)
+                self._etaname.append(tmp)
 
     @property
     def dim(self):
@@ -78,20 +106,40 @@ class COMCOTdat(object):
         return self._eta
 
 class COMCOTGlobalmap(COMCOTdat):
-    def __init__(self, BASE_DIR, Layer=1):
-        super(COMCOTGlobalmap, self).__init__(BASE_DIR, Layer=1)
+    def __init__(self, BASE_DIR, Layer=1, timestep=2, busywaitmode=True):
+        super(COMCOTGlobalmap, self).__init__(BASE_DIR, Layer=1, busywaitmode=busywaitmode)
         self._cmax = 0.5#npy.max(self.ETA[0])/2
-        for time in self.ETA:
-            self.Eta_Map(time,2)
-            plt.savefig("plot_z_01_%05d.png" %time)
-            plt.close()
-    def Eta_Map(self, step, timestep):
+        self._step2timecoef = 1.0/(60.0/timestep)
+        done = []
+        if busywaitmode:
+            while True:
+                self.Update_eta()
+                num = 0
+                for step in self.ETA:
+                    if step not in done:
+                        self.save_eta(step)
+                        done.append(step)
+                        num+=1
+                if num == 0:
+                    print("No new eta files (z_[layer]_[step].dat) found, sleep")
+                    sleep(3)
+        else:
+            for step in self.ETA:
+                self.save_eta(step)
+                done.append(step)
+
+    def save_eta(self, step):
+        self.Eta_Map(step)
+        plt.savefig("plot_z_01_%05d.png" %step)
+        plt.close()
+
+    def Eta_Map(self, step):
         print('processing %dth step plot' % step)
         m = self.Global_MAP()
-        pc = m.pcolor(self.XGRID, self.YGRID, self.ETA[step], cmap='RdBu_r', vmin=-self._cmax, vmax=self._cmax)
+        pc = m.pcolormesh(self.XGRID, self.YGRID, self.ETA[step], cmap='RdBu_r', vmin=-self._cmax, vmax=self._cmax)
         m.colorbar(pc, location="right")
-        step = float(step)/(60.0/timestep)
-        plt.title("Tsunami Wave Propagation at Time = %5.3f min" % step)
+        t = float(step)*self._step2timecoef
+        plt.title("Tsunami Wave Propagation at Time = %5.3f min" % t)
 
     def Global_MAP(self):
         fig = plt.figure(figsize=(18,12))
@@ -109,6 +157,6 @@ class COMCOTGlobalmap(COMCOTdat):
         m.drawparallels(npy.arange(-90.,91.,20.),labels=[1,0,0,0])
         m.drawmeridians(npy.arange(-180.,181.,15.),labels=[0,0,0,1])
         return m
-    
+
 if __name__ == '__main__':
     test = COMCOTGlobalmap(argv[1])
