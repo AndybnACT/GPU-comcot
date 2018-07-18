@@ -134,11 +134,11 @@ extern "C" void cuda_boot_(float *R1_f, float *R2_f, float *R3_f, float *R4_f, f
 
 
     // kernel configurations
-    DimGridMomt_MN   = {(size_hst[0]-1)/(31*(BLOCKX_MOMT>>5)) + 1, LOAD_PER_SM*(uint32_t)dev_prop.multiProcessorCount, 1};
-    DimGridMomt      = {(size_hst[0]-1)/EXECY + 1, (size_hst[1]-1)/EXECX + 1, 1};
-    DimGridMass      = {(size_hst[0]-1)/(31*(BLOCKX_MASS>>5)) + 1, LOAD_PER_SM*(uint32_t)dev_prop.multiProcessorCount, 1};
-    DimGridOpenBD_LR = {(size_hst[0]-1)/(31*(BLOCKX_OPENBD>>5)) + 1, 1, 1};
-    DimGridOpenBD_TB = {(size_hst[1]-1)/(31*(BLOCKX_OPENBD>>5)) + 1, 1, 1};
+    DimGridMomt_MN   = dim3((size_hst[0]-1)/(31*(BLOCKX_MOMT>>5)) + 1, LOAD_PER_SM*(uint32_t)dev_prop.multiProcessorCount, 1);
+    DimGridMomt      = dim3((size_hst[0]-1)/EXECY + 1, (size_hst[1]-1)/EXECX + 1, 1);
+    DimGridMass      = dim3((size_hst[0]-1)/(31*(BLOCKX_MASS>>5)) + 1, LOAD_PER_SM*(uint32_t)dev_prop.multiProcessorCount, 1);
+    DimGridOpenBD_LR = dim3((size_hst[0]-1)/(31*(BLOCKX_OPENBD>>5)) + 1, 1, 1);
+    DimGridOpenBD_TB = dim3((size_hst[1]-1)/(31*(BLOCKX_OPENBD>>5)) + 1, 1, 1);
     GridMaxAmp       = (size_hst[2]-1)/MAXAMP_BLOCK + 1;
 
     //streams
