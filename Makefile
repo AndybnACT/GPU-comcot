@@ -4,14 +4,14 @@
 #####################################################################
 
 ### Plese specify your fortran, cuda compiler and GPU's compute capabilities #####
-FC          = x86_64-pc-linux-gnu-gfortran-4.9
+FC          = gfortran
 FC_FLAGS    = -O2
 
 
 NVCC        = nvcc
 NVFLAGS     =
 NVCC_OPT    = -arch=sm_61 -lineinfo
-NVLIB       = -L/opt/cuda/lib64
+NVLIB       = -L/usr/local/cuda-9.2/lib64
 ##################################################################################
 
 

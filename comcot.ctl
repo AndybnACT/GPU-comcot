@@ -8,8 +8,8 @@
 # General Parameters for Simulation             : Value Field                  |
 #===============================================:===============================
 #Job Description: NZ30sec bathymetry, Spherical Coordinates for code testing
- Total run time (Wall clock, seconds)           :   86400.0
- Time interval to Save Data    ( unit: sec )    :   3600.0
+ Total run time (Wall clock, seconds)           :   7200.0
+ Time interval to Save Data    ( unit: sec )    :   1800.0
  Output Zmax & TS (0-Max Z;1-Timeseries;2-Both) :     2
  Start Type (0-Cold start; 1-Hot start)         :     0
  Resuming Time If hot start (Seconds)           :  100000000000000.00

@@ -159,4 +159,5 @@ class COMCOTGlobalmap(COMCOTdat):
         return m
 
 if __name__ == '__main__':
+    plt.switch_backend('agg') # no display mode 
     test = COMCOTGlobalmap(argv[1])
