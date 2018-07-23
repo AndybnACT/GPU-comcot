@@ -2,19 +2,29 @@
 #include "GPUConfig.h"
 
 // global variables-----------------------------
-float *Zout_hst, *MNout_hst;
-float *MNdat_hst, *Zdat_hst;
+float *Zout_hst/*, *MNout_hst*/;
+float /**MNdat_hst,*/ *Zdat_hst;
 float *R24_hst, *R35_hst, *H_hst;
 float *R_MASS_hst;
 float *Zmax_hst;
 // __device__ float *R35_dev;
 // __device__ float *R24_dev, *H_dev;
 // __device__ float *Z_dat_dev, *MN_dat_dev;
-__device__ float *MN_out_dev, *Z_out_dev;
+__device__ float /**MN_out_dev,*/ *Z_out_dev;
 __constant__ __device__ uint32_t size_dev[4];
 // texture<float, cudaTextureType2D, cudaReadModeElementType> ZtexRef;
 // texture<float, cudaTextureType2D, cudaReadModeElementType> MNtexRef;
 
+float2 *MNcontainer;
+texture <float2, cudaTextureType2D, cudaReadModeElementType> MNtext;
+size_t MNpitch;
+float2 *MNdat_pitchedMEM_hst;
+float2 *MNout_pitchedMEM_hst;
+cudaChannelFormatDesc descflt2;
+
+__device__ float2 *MNout_pitchedMEM_dev;
+__constant__ __device__ size_t MNpitch_dev;
+// __constant__ size_t textOffset;
 
 cudaStream_t EXECstream[NUMSTREAM];
 dim3 DimBlockMomt_MN(BLOCKX_MOMT,1,1);
@@ -37,6 +47,7 @@ cudaDeviceProp dev_prop;
 extern "C" void cuda_boot_(float*,float*,float*,float*,float*,float*,float*,float*,float*,int*,int*);
 extern "C" void cuda_update_(void);
 void cudaMalloc2E(void**, void*, void*, size_t);
+void cudaMallocMN(size_t, size_t);
 #ifdef DEBUG
     __host__ __device__ void prt_mat(float*, size_t, size_t);
     __global__ void GPUmemtest(void);
@@ -46,7 +57,7 @@ void cudaMalloc2E(void**, void*, void*, size_t);
 
 
 extern "C" void cuda_boot_(float *R1_f, float *R2_f, float *R3_f, float *R4_f, float *R5_f, \
-                           float *R6_f, float *R11_f, float *H_f, float *Z_f, int *row, int *col){
+                           float *R6_f, float *R11_f, float *H_f, float *Z_f, int *nx, int *ny){
 
     //float *R24_hst, *R35_hst, *H_hst;
     float *R3, *R5;
@@ -54,10 +65,10 @@ extern "C" void cuda_boot_(float *R1_f, float *R2_f, float *R3_f, float *R4_f, f
 
 
 
-    size_hst[0] = *row;
-    size_hst[1] = *col;
-    size_hst[2] = (*row)*(*col);
-    size_hst[3] = (*row)*(*col)*sizeof(float);
+    size_hst[0] = *nx;
+    size_hst[1] = *ny;
+    size_hst[2] = (*nx)*(*ny);
+    size_hst[3] = (*nx)*(*ny)*sizeof(float);
     cudaCHK( cudaGetDeviceProperties(&dev_prop, 0) );
     printf("GPU INFORMATIONS:                      %s\n", dev_prop.name);
     printf("-->Compute Capabilities [Major.Miner]: %d.%d\n", dev_prop.major, dev_prop.minor);
@@ -117,11 +128,11 @@ extern "C" void cuda_boot_(float *R1_f, float *R2_f, float *R3_f, float *R4_f, f
     cudaCHK( cudaMemcpyToSymbol(Z_out_dev, &Zout_hst, sizeof(float*)) );
 
 
-    cudaMalloc2E((void**)&MNdat_hst, NULL, NULL, size_hst[3]);
+    // cudaMalloc2E((void**)&MNdat_hst, NULL, NULL, size_hst[3]);
     //cudaCHK( cudaMemcpyToSymbol(MN_dat_dev, &MNdat_hst, sizeof(float*)) );
 
-    cudaMalloc2E((void**)&MNout_hst, NULL, NULL, size_hst[3]);
-    cudaCHK( cudaMemcpyToSymbol(MN_out_dev, &MNout_hst, sizeof(float*)) );
+    // cudaMalloc2E((void**)&MNout_hst, NULL, NULL, size_hst[3]);
+    // cudaCHK( cudaMemcpyToSymbol(MN_out_dev, &MNout_hst, sizeof(float*)) );
 
     // copy data into variables
     // const variables === H, size ===
@@ -131,6 +142,17 @@ extern "C" void cuda_boot_(float *R1_f, float *R2_f, float *R3_f, float *R4_f, f
     cudaCHK( cudaMemcpyToSymbol(size_dev, &size_hst, sizeof(size_hst)) );
 
     //Texture Memories
+    // cudaChannelFormatDesc desc = cudaCreateChannelDesc(32, 0, 0, 0, cudaChannelFormatKindFloat);
+    // cudaCHK( cudaBindTexture2D(NULL, MNtext, M) );
+    // MN texture
+    cudaMallocMN(*ny, *nx);
+    descflt2 = cudaCreateChannelDesc(32, 32, 0, 0, cudaChannelFormatKindFloat);
+    MNtext.filterMode = cudaFilterModePoint;
+    MNtext.normalized = 0;
+    MNtext.addressMode[0] = cudaAddressModeClamp;
+    MNtext.addressMode[1] = cudaAddressModeClamp;
+    //                                                        |-> width=col  |-> height=row
+    cudaCHK( cudaBindTexture2D(NULL, MNtext, MNdat_pitchedMEM_hst, descflt2, size_hst[0], size_hst[1], MNpitch) );
 
 
     // kernel configurations
@@ -192,25 +214,68 @@ extern "C" void cuda_boot_(float *R1_f, float *R2_f, float *R3_f, float *R4_f, f
     free(R5);
 }
 
-extern "C" void cuda_update_(void) {
+extern "C" void cuda_update_(void) {// similar to function change
     float *tmp;
-    // similar to function change
-    cudaCHK( cudaMemcpyToSymbol(MN_out_dev, &MNdat_hst, sizeof(float*)) );
-    //cudaCHK( cudaMemcpyToSymbol(MN_dat_dev, &MNout_hst, sizeof(float*)) );
-    tmp = MNout_hst;
-    MNout_hst = MNdat_hst;
-    MNdat_hst = tmp;
+    float2 *tmpf2;
+    // unbind the MN texture
+    cudaCHK( cudaUnbindTexture(MNtext) );
+
+
+    // cudaCHK( cudaMemcpyToSymbol(MN_out_dev, &MNdat_hst, sizeof(float*)) );
+    // //cudaCHK( cudaMemcpyToSymbol(MN_dat_dev, &MNout_hst, sizeof(float*)) );
+    // tmp = MNout_hst;
+    // MNout_hst = MNdat_hst;
+    // MNdat_hst = tmp;
 
     cudaCHK( cudaMemcpyToSymbol(Z_out_dev, &Zdat_hst, sizeof(float*)) );
     // cudaCHK( cudaMemcpyToSymbol(Z_dat_dev, &Zout_hst, sizeof(float*)) );
     tmp = Zout_hst;
     Zout_hst = Zdat_hst;
     Zdat_hst = tmp;
+
+    cudaCHK( cudaMemcpyToSymbol(MNout_pitchedMEM_dev, &MNdat_pitchedMEM_hst, sizeof(float*)) );
+    tmpf2 = MNout_pitchedMEM_hst;
+    MNout_pitchedMEM_hst = MNdat_pitchedMEM_hst;
+    MNdat_pitchedMEM_hst = tmpf2;
+
+    // rebind the texture
+    //                                                                        |-> width=col  |-> height=row
+    cudaCHK( cudaBindTexture2D(NULL, MNtext, MNdat_pitchedMEM_hst, descflt2, size_hst[0], size_hst[1], MNpitch) );
+
 }
 
 extern "C" void cuda_shutdown_(void){
     // Free Device Memory
     // Unbind Texture Memory
+}
+
+
+void cudaMallocMN(size_t row, size_t col){
+    MNcontainer = (float2 *) malloc(row*col*sizeof(float2));
+    // for (size_t i = 0; i < row; i++) {// assign initial value to host with float2 format
+    //     for (size_t j = 0; j < col; j++) {
+    //         MNcontainer[i*row + col].x = M[i*row+col];
+    //         MNcontainer[i*row + col].y = N[i*row+col];
+    //     }
+    // }
+
+    //host memory
+    cudaCHK( cudaMallocPitch(&MNdat_pitchedMEM_hst, &MNpitch, col*sizeof(float2), row) );
+
+    //device memory
+    size_t tmppitch;
+    cudaCHK( cudaMallocPitch(&MNout_pitchedMEM_hst, &tmppitch, col*sizeof(float2), row) );
+    if (tmppitch != MNpitch) { // just a check
+        printf("Error @%d, %s\n",__LINE__, __FILE__ ); // not reach
+        exit(1);
+    }
+    cudaCHK( cudaMemcpyToSymbol(MNout_pitchedMEM_dev, &MNout_pitchedMEM_hst, sizeof(float2*)) );
+    cudaCHK( cudaMemcpyToSymbol(MNpitch_dev, &MNpitch, sizeof(size_t)) );
+
+    // copy the initial values into device
+    // cudaCHK( cudaMemcpy2D(MNdat_pitchedMEM_hst, MNpitch, MNcontainer, row*sizeof(float2)
+    //                                             , row*sizeof(float2), col, cudaMemcpyHostToDevice) );
+    cudaCHK( cudaMemset2D(MNdat_pitchedMEM_hst, MNpitch, 0, col*sizeof(float2), row) );
 }
 
 
