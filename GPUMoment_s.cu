@@ -20,6 +20,7 @@ extern "C" void momt_launch_(float*,float*,float*);
 
 __global__ void momts_kernel_tex(const float* __restrict__,
                     const float* __restrict__,const float* __restrict__,const float* __restrict__);
+__global__ void momts_kernel_tex_(const float* __restrict__ , const float* __restrict__ );
 
 extern "C" void momt_launch_(float *M_f, float *N_f, float *Z_f /*FUTURE: delete*/) {
     float* tmp;
@@ -46,6 +47,14 @@ extern "C" void momt_launch_(float *M_f, float *N_f, float *Z_f /*FUTURE: delete
     fi = clock();
 
 
+    cudaCHK( cudaUnbindTexture(ZHtext) );
+    cudaCHK( cudaBindTexture2D(NULL, ZHtext, ZHout_pitchedMEM_hst, descflt2, size_hst[0], size_hst[1], MNpitch) );
+    st = clock();
+    momts_kernel_tex_ <<< DimGridMomt, DimBlockMomt >>> (R24_hst, R35_hst);
+    cudaDeviceSynchronize();
+    err = cudaGetLastError();
+    cudaERROR(err);
+    fi = clock();
 
     // st = clock();
     // momts_kernel <<< DimGridMomt, DimBlockMomt >>> (Zout_hst, MNdat_hst, R24_hst, R35_hst, H_hst);
@@ -529,10 +538,9 @@ __global__ void momts_kernel_tex(const float* __restrict__ Z,
                                             tex2D<float2>(MNtext, row, col-1).y + tex2D<float2>(MNtext, row+1, col-1).y;//MN_dat[threadIdx.x][threadIdx.y][1] + MN_dat[ip1][threadIdx.y][1];
                             x   = tex2D<float2>(MNtext, row, col).x - r1*(Z_dat[ip1][threadIdx.y] - Z_dat[threadIdx.x][threadIdx.y]) +
                                             r2*tot;
-
                             if ( x > EPS || -x > EPS) F2_PITCH_ACCESS(MNout_pitchedMEM_dev, MNpitch_dev, row, col)->x = x;//MN_out_dev[id] = tot;
                             else  F2_PITCH_ACCESS(MNout_pitchedMEM_dev, MNpitch_dev, row, col)->x = 0.0f;
-                            // if (row == 2914 && col == 1247) {
+                            // if (row == 2806 && col == 1477) {
                             //     printf("[%d,%d]===========tex====================[row,col][%d,%d]\n",threadIdx.x,blockIdx.x,row,col );
                             //     printf("%e\t%e\t%e\t%e\t%e\t%e\n",r1,r2, tex2D<float2>(MNtext, row, col).y, tex2D<float2>(MNtext, row+1, col).y, tex2D<float2>(MNtext, row, col-1).y, tex2D<float2>(MNtext, row+1, col-1).y);
                             //     printf("%e\t%e\t%e\n", tex2D<float2>(MNtext, row, col).x, Z_dat[ip1][threadIdx.y], Z_dat[threadIdx.x][threadIdx.y]);
@@ -558,6 +566,83 @@ __global__ void momts_kernel_tex(const float* __restrict__ Z,
                                               r2*tot;
                             if ( x > EPS || -x > EPS)  F2_PITCH_ACCESS(MNout_pitchedMEM_dev, MNpitch_dev, row, col)->y = x;//MN_out_dev[idmn] = tot;
                             else F2_PITCH_ACCESS(MNout_pitchedMEM_dev, MNpitch_dev, row, col)->y = 0.0f;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+//789
+__global__ void momts_kernel_tex_(const float* __restrict__ R24, const float* __restrict__ R35) {
+    __shared__ float   Z_dat[BLOCKX][BLOCKY+1]; // BLOCKY+1 for preventing bank conflicts
+    // __shared__ float  MN_dat[BLOCKX][BLOCKY+1][2];
+    __shared__ float   H_dat[BLOCKX][BLOCKY+1];
+
+    int row = blockIdx.x*(EXECX) + threadIdx.x;
+    int col = blockIdx.y*(EXECY) + threadIdx.y;
+    int id = ID(row, col);
+    //int idr2 = id+size_dev[2];
+    int idmn = id+threadIdx.z*size_dev[2];
+    float r1, r2, tot=0.0f, x=0.0f;
+
+
+    if (row < size_dev[0] && col < size_dev[1]){
+    // printf("%d %d\n",row, col);
+        // store in share mem (custom L1 cache) early is 2.8% faster than direct texture reference on used  (res=2926*1786)
+        H_dat[threadIdx.x][threadIdx.y] = tex2D<float2>(ZHtext, row, col).y;//H[id]; // -->texture mem might be better
+        Z_dat[threadIdx.x][threadIdx.y] = tex2D<float2>(ZHtext, row, col).x;//Z[id];
+        // MN_dat[threadIdx.x][threadIdx.y][threadIdx.z] = MN[idmn]; //(threadIdx.z==0) ? F2_PITCH_ACCESS(MN, MNpitch_dev, row,col)->x:F2_PITCH_ACCESS(MN, MNpitch_dev, row,col)->y;
+        __syncthreads();
+
+
+        if (threadIdx.z == 0) { // for M
+            if (threadIdx.y != 0 || col == 0) {// boundary condition in threadblocks (if 1st thread is not 1st col)
+                if (threadIdx.x < EXECX){ // boundary condition in threadblocks
+                    if (row < size_dev[0] - 1){ // IS:IE
+                        int ip1 = threadIdx.x+1; // i plus 1
+                        // int jm1 = threadIdx.y-1; // j minus 1 (only used when col != 0)
+                        if (H_dat[threadIdx.x][threadIdx.y] > GX && H_dat[ip1][threadIdx.y] > GX) { //NOTE redundant checks, since H is constant
+                            r1 = R24[id];
+                            r2 = R35[col];
+                            tot = tex2D<float2>(MNtext, row, col).y + tex2D<float2>(MNtext, row+1, col).y +
+                                            tex2D<float2>(MNtext, row, col-1).y + tex2D<float2>(MNtext, row+1, col-1).y;//MN_dat[threadIdx.x][threadIdx.y][1] + MN_dat[ip1][threadIdx.y][1];
+                            x   = tex2D<float2>(MNtext, row, col).x - r1*(Z_dat[ip1][threadIdx.y] - Z_dat[threadIdx.x][threadIdx.y]) +
+                                            r2*tot;
+                            ANSCHK((F2_PITCH_ACCESS(MNout_pitchedMEM_dev, MNpitch_dev, row, col)->x), x);
+                            // if (fabs(F2_PITCH_ACCESS(MNout_pitchedMEM_dev, MNpitch_dev, row, col)->x - x) > 1e-4 && row == 2806 && col == 1477) {
+                            //     printf("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n");
+                            //     // printf("%s Kernel/Kernel_[%d,%d] inconsistent: Kernel%e\tKernel_:%e\n",__FILE__,row,col,F2_PITCH_ACCESS(MNout_pitchedMEM_dev, MNpitch_dev, row, col)->x, x);
+                            // }
+                            if ( x > EPS || -x > EPS) F2_PITCH_ACCESS(MNout_pitchedMEM_dev, MNpitch_dev, row, col)->x = x;//MN_out_dev[id] = tot;
+                            else  F2_PITCH_ACCESS(MNout_pitchedMEM_dev, MNpitch_dev, row, col)->x = 0.0f;
+                            // if (row == 2806 && col == 1477) {
+                            //     printf("[%d,%d]===========tex====================[row,col][%d,%d]\n",threadIdx.x,blockIdx.x,row,col );
+                            //     printf("%e\t%e\t%e\t%e\t%e\t%e\n",r1,r2, tex2D<float2>(MNtext, row, col).y, tex2D<float2>(MNtext, row+1, col).y, tex2D<float2>(MNtext, row, col-1).y, tex2D<float2>(MNtext, row+1, col-1).y);
+                            //     printf("%e\t%e\t%e\n", tex2D<float2>(MNtext, row, col).x, Z_dat[ip1][threadIdx.y], Z_dat[threadIdx.x][threadIdx.y]);
+                            // }
+
+                        }
+                    }
+                }
+            }
+        }else{ // for N
+            if (threadIdx.x != 0 || row == 0) {// boundary condition in threadblocks
+                if (threadIdx.y < EXECY){ //boundary condotion in threadblocks
+                    if (col < size_dev[1] - 1) { //JS:JE
+                        int jp1 = threadIdx.y+1;
+                        // int im1 = threadIdx.x-1;
+                        if (H_dat[threadIdx.x][threadIdx.y] > GX && H_dat[threadIdx.x][jp1] > GX) {  // preconditions
+                            r1 = R24[idmn];
+                            r2 = R35[col+size_dev[1]];
+                            tot  = tex2D<float2>(MNtext, row, col).x + tex2D<float2>(MNtext, row, col+1).x +
+                                             tex2D<float2>(MNtext, row-1, col).x + tex2D<float2>(MNtext, row-1, col+1).x;// MN_dat[threadIdx.x][threadIdx.y][0] + MN_dat[threadIdx.x][jp1][0];
+                            x    = tex2D<float2>(MNtext, row, col).y - r1*(Z_dat[threadIdx.x][jp1] - Z_dat[threadIdx.x][threadIdx.y]) -
+                                              r2*tot;
+                            ANSCHK((F2_PITCH_ACCESS(MNout_pitchedMEM_dev, MNpitch_dev, row, col)->y), x);
+                            if ( x > EPS || -x > EPS)  F2_PITCH_ACCESS(MNout_pitchedMEM_dev, MNpitch_dev, row, col)->y = x;//MN_out_dev[idmn] = tot;
+                            else F2_PITCH_ACCESS(MNout_pitchedMEM_dev, MNpitch_dev, row, col)->y = 0.0f;
+
                         }
                     }
                 }

@@ -3,7 +3,7 @@
 #include <time.h>
 #include "vector_types.h"
 
-// #define DEBUG
+#define DEBUG
 #ifdef DEBUG
     // #define DEBUG_MOMT_KERNEL
     // #define DEBUG_MASS_KERNEL
@@ -19,6 +19,11 @@
         #define ID2E_hst(row,col,dim) size_hst[2]*dim + ID_hst(row,col)
         extern float* tmpout;
     #endif
+#endif
+#ifdef DEBUG
+    #define ANSCHK(ABS,CHK) if (fabs(ABS-CHK) > ERROR) printf("%s Kernel/Kernel_ inconsistent: Kernel%e\tKernel_:%e\n",__FILE__,ABS, CHK);
+#else
+    #define ANSCHK(A,B) ;
 #endif
 
 #ifndef CONSTS
@@ -74,11 +79,20 @@
 
     extern texture <float2, cudaTextureType2D, cudaReadModeElementType> MNtext;
     extern float2 *MNcontainer; //temporary space to store the float2 array
-    extern size_t MNpitch;
+    extern size_t MNpitch; //NOTE use layer pitch instead
     extern float2 *MNdat_pitchedMEM_hst;
     extern float2 *MNout_pitchedMEM_hst;
     extern __device__ float2 *MNout_pitchedMEM_dev;
-    extern __constant__ __device__ size_t MNpitch_dev;
+    extern __constant__ __device__ size_t MNpitch_dev;//NOTE use layer pitch instead
+
+    extern texture <float2, cudaTextureType2D, cudaReadModeElementType> ZHtext;
+    extern float2 *ZHcontainer;
+    // extern size_t ZHpitch;//NOTE use layer pitch instead
+    extern float2 *ZHdat_pitchedMEM_hst;
+    extern float2 *ZHout_pitchedMEM_hst;
+    extern __device__ float2 *ZHout_pitchedMEM_dev;
+    // extern __constant__ __device__ size_t ZHpitch_dev;//NOTE use layer pitch instead
 
     // extern __constant__ size_t textOffset;
+    extern cudaChannelFormatDesc descflt2;
 #endif
