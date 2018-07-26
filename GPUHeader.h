@@ -3,7 +3,7 @@
 #include <time.h>
 #include "vector_types.h"
 
-#define DEBUG
+// #define DEBUG
 #ifdef DEBUG
     // #define DEBUG_MOMT_KERNEL
     // #define DEBUG_MASS_KERNEL
@@ -61,16 +61,16 @@
 
 
 #ifndef CUDA_GLOB_VAR
-    extern float *Zout_hst/*, *MNout_hst */;
-    extern float /**MNdat_hst, */*Zdat_hst;
-    extern float *R24_hst, *R35_hst, *H_hst;
+    // extern float *Zout_hst/*, *MNout_hst */;
+    // extern float /**MNdat_hst, */*Zdat_hst;
+    extern float *R24_hst, *R35_hst/*, *H_hst*/;
     //float *R1_hst, *R6_hst, *R11_hst;
     extern float *R_MASS_hst;
 
     // extern __device__ float *R35_dev;
     // extern __device__ float *R24_dev, *H_dev;
     // extern __device__ float *Z_dat_dev, *MN_dat_dev;
-    extern __device__ float/* *MN_out_dev,*/ *Z_out_dev;
+    // extern __device__ float/* *MN_out_dev,*/ *Z_out_dev;
     extern __constant__ __device__ uint32_t size_dev[4];
     extern float *Zmax_hst;
     extern uint32_t size_hst[4];
@@ -79,20 +79,17 @@
 
     extern texture <float2, cudaTextureType2D, cudaReadModeElementType> MNtext;
     extern float2 *MNcontainer; //temporary space to store the float2 array
-    extern size_t MNpitch; //NOTE use layer pitch instead
+    extern size_t LayerPitch;
     extern float2 *MNdat_pitchedMEM_hst;
     extern float2 *MNout_pitchedMEM_hst;
     extern __device__ float2 *MNout_pitchedMEM_dev;
-    extern __constant__ __device__ size_t MNpitch_dev;//NOTE use layer pitch instead
+    extern __constant__ __device__ size_t LayerPitch_dev;
 
     extern texture <float2, cudaTextureType2D, cudaReadModeElementType> ZHtext;
     extern float2 *ZHcontainer;
-    // extern size_t ZHpitch;//NOTE use layer pitch instead
     extern float2 *ZHdat_pitchedMEM_hst;
     extern float2 *ZHout_pitchedMEM_hst;
     extern __device__ float2 *ZHout_pitchedMEM_dev;
-    // extern __constant__ __device__ size_t ZHpitch_dev;//NOTE use layer pitch instead
 
-    // extern __constant__ size_t textOffset;
     extern cudaChannelFormatDesc descflt2;
 #endif
