@@ -2,22 +2,22 @@
 #include "GPUConfig.h"
 
 // global variables-----------------------------
-float *Zout_hst/*, *MNout_hst*/;
-float /**MNdat_hst,*/ *Zdat_hst;
-float *R24_hst, *R35_hst, *H_hst;
+// float *Zout_hst/*, *MNout_hst*/;
+// float /**MNdat_hst,*/ *Zdat_hst;
+float *R24_hst, *R35_hst;//, *H_hst;
 float *R_MASS_hst;
 float *Zmax_hst;
 // __device__ float *R35_dev;
 // __device__ float *R24_dev, *H_dev;
 // __device__ float *Z_dat_dev, *MN_dat_dev;
-__device__ float /**MN_out_dev,*/ *Z_out_dev;
+// __device__ float /**MN_out_dev,*/ *Z_out_dev;
 __constant__ __device__ uint32_t size_dev[4];
 // texture<float, cudaTextureType2D, cudaReadModeElementType> ZtexRef;
 // texture<float, cudaTextureType2D, cudaReadModeElementType> MNtexRef;
 
 float2 *MNcontainer;
 texture <float2, cudaTextureType2D, cudaReadModeElementType> MNtext;
-size_t MNpitch;
+size_t LayerPitch;
 float2 *MNdat_pitchedMEM_hst;
 float2 *MNout_pitchedMEM_hst;
 
@@ -30,7 +30,7 @@ float2 *ZHout_pitchedMEM_hst;
 cudaChannelFormatDesc descflt2;
 
 __device__ float2 *MNout_pitchedMEM_dev;
-__constant__ __device__ size_t MNpitch_dev;
+__constant__ __device__ size_t LayerPitch_dev;
 __device__ float2 *ZHout_pitchedMEM_dev;
 __constant__ __device__ size_t ZHpitch_dev;
 // __constant__ size_t textOffset;
@@ -45,6 +45,8 @@ dim3 DimGridMass(1,1,1);
 dim3 DimBlockOpenBD(BLOCKX_OPENBD,1,1);
 dim3 DimGridOpenBD_LR(0,1,1);
 dim3 DimGridOpenBD_TB(0,1,1);
+dim3 DimBlockMaxAmp(BLOCKX_MAXAMP, BLOCKY_MAXAMP, 1);
+dim3 DimGridMaxAmp(0,0,1);
 size_t GridMaxAmp;
 
 uint32_t size_hst[4];
@@ -89,7 +91,7 @@ extern "C" void cuda_boot_(float *R1_f, float *R2_f, float *R3_f, float *R4_f, f
     printf("-->Warp Size:                          %d\n", dev_prop.warpSize);
     // allocate variables
     // const === R2 R4 H ===
-    cudaCHK( cudaMalloc(&H_hst, size_hst[3]) );
+    // cudaCHK( cudaMalloc(&H_hst, size_hst[3]) );
 
     cudaMalloc2E((void**)&R24_hst, R2_f, R4_f, size_hst[3]);
     //cudaCHK( cudaMemcpyToSymbol(R24_dev, &R24_hst, sizeof(float*)) );
@@ -127,14 +129,14 @@ extern "C" void cuda_boot_(float *R1_f, float *R2_f, float *R3_f, float *R4_f, f
     //cudaCHK( cudaMemcpyToSymbol(R35_dev, &R35_hst, sizeof(float*)) );
 
     // output variables === M N Z ===
-    cudaCHK( cudaMalloc(&Zdat_hst, size_hst[3]) );
+    // cudaCHK( cudaMalloc(&Zdat_hst, size_hst[3]) );
     cudaCHK( cudaMalloc(&Zmax_hst, size_hst[3]) );
     //cudaCHK( cudaMemcpyToSymbol(Z_dat_dev, &Zdat_hst, sizeof(float*)) );
-    cudaCHK( cudaMemcpy(Zdat_hst, Z_f, size_hst[3], cudaMemcpyHostToDevice) );
+    // cudaCHK( cudaMemcpy(Zdat_hst, Z_f, size_hst[3], cudaMemcpyHostToDevice) );
     cudaCHK( cudaMemcpy(Zmax_hst, Z_f, size_hst[3], cudaMemcpyHostToDevice) );
 
-    cudaCHK( cudaMalloc(&Zout_hst, size_hst[3]) );
-    cudaCHK( cudaMemcpyToSymbol(Z_out_dev, &Zout_hst, sizeof(float*)) );
+    // cudaCHK( cudaMalloc(&Zout_hst, size_hst[3]) );
+    // cudaCHK( cudaMemcpyToSymbol(Z_out_dev, &Zout_hst, sizeof(float*)) );
 
 
     // cudaMalloc2E((void**)&MNdat_hst, NULL, NULL, size_hst[3]);
@@ -145,7 +147,7 @@ extern "C" void cuda_boot_(float *R1_f, float *R2_f, float *R3_f, float *R4_f, f
 
     // copy data into variables
     // const variables === H, size ===
-    cudaCHK( cudaMemcpy(H_hst, H_f, size_hst[3], cudaMemcpyHostToDevice) );
+    // cudaCHK( cudaMemcpy(H_hst, H_f, size_hst[3], cudaMemcpyHostToDevice) );
     //cudaCHK( cudaMemcpyToSymbol(H_dev, &H_hst, sizeof(float*)) );
 
     cudaCHK( cudaMemcpyToSymbol(size_dev, &size_hst, sizeof(size_hst)) );
@@ -166,8 +168,8 @@ extern "C" void cuda_boot_(float *R1_f, float *R2_f, float *R3_f, float *R4_f, f
     ZHtext.addressMode[0] = cudaAddressModeClamp;
     ZHtext.addressMode[1] = cudaAddressModeClamp;
     //                                                                       |-> width=col  |-> height=row
-    cudaCHK( cudaBindTexture2D(NULL, MNtext, MNdat_pitchedMEM_hst, descflt2, size_hst[0], size_hst[1], MNpitch) );
-    cudaCHK( cudaBindTexture2D(NULL, ZHtext, ZHdat_pitchedMEM_hst, descflt2, size_hst[0], size_hst[1], MNpitch) );
+    cudaCHK( cudaBindTexture2D(NULL, MNtext, MNdat_pitchedMEM_hst, descflt2, size_hst[0], size_hst[1], LayerPitch) );
+    cudaCHK( cudaBindTexture2D(NULL, ZHtext, ZHdat_pitchedMEM_hst, descflt2, size_hst[0], size_hst[1], LayerPitch) );
 
 
     // kernel configurations
@@ -177,6 +179,7 @@ extern "C" void cuda_boot_(float *R1_f, float *R2_f, float *R3_f, float *R4_f, f
     DimGridOpenBD_LR = dim3((size_hst[0]-1)/(31*(BLOCKX_OPENBD>>5)) + 1, 1, 1);
     DimGridOpenBD_TB = dim3((size_hst[1]-1)/(31*(BLOCKX_OPENBD>>5)) + 1, 1, 1);
     GridMaxAmp       = (size_hst[2]-1)/MAXAMP_BLOCK + 1;
+    DimGridMaxAmp    = dim3((size_hst[0]-1)/BLOCKX_MAXAMP, (size_hst[1]-1)/BLOCKY_MAXAMP, 1);
 
     //streams
     for (size_t i = 0; i < NUMSTREAM; i++) {
@@ -246,11 +249,11 @@ extern "C" void cuda_update_(void) {// similar to function change
     // MNout_hst = MNdat_hst;
     // MNdat_hst = tmp;
 
-    cudaCHK( cudaMemcpyToSymbol(Z_out_dev, &Zdat_hst, sizeof(float*)) );
+    // cudaCHK( cudaMemcpyToSymbol(Z_out_dev, &Zdat_hst, sizeof(float*)) );
     // cudaCHK( cudaMemcpyToSymbol(Z_dat_dev, &Zout_hst, sizeof(float*)) );
-    tmp = Zout_hst;
-    Zout_hst = Zdat_hst;
-    Zdat_hst = tmp;
+    // tmp = Zout_hst;
+    // Zout_hst = Zdat_hst;
+    // Zdat_hst = tmp;
 
     cudaCHK( cudaMemcpyToSymbol(MNout_pitchedMEM_dev, &MNdat_pitchedMEM_hst, sizeof(float*)) );
     tmpf2 = MNout_pitchedMEM_hst;
@@ -264,8 +267,8 @@ extern "C" void cuda_update_(void) {// similar to function change
 
     // rebind the texture
     //                                                                        |-> width=col  |-> height=row
-    cudaCHK( cudaBindTexture2D(NULL, MNtext, MNdat_pitchedMEM_hst, descflt2, size_hst[0], size_hst[1], MNpitch) );
-    cudaCHK( cudaBindTexture2D(NULL, ZHtext, ZHdat_pitchedMEM_hst, descflt2, size_hst[0], size_hst[1], MNpitch) );
+    cudaCHK( cudaBindTexture2D(NULL, MNtext, MNdat_pitchedMEM_hst, descflt2, size_hst[0], size_hst[1], LayerPitch) );
+    cudaCHK( cudaBindTexture2D(NULL, ZHtext, ZHdat_pitchedMEM_hst, descflt2, size_hst[0], size_hst[1], LayerPitch) );
 
 }
 
@@ -289,9 +292,9 @@ void cudaMallocMNZH(size_t ny, size_t nx, float* Z_f, float* H_f){
     }
 
     //device memory--dat
-    cudaCHK( cudaMallocPitch(&MNdat_pitchedMEM_hst, &MNpitch, nx*sizeof(float2), ny) );
+    cudaCHK( cudaMallocPitch(&MNdat_pitchedMEM_hst, &LayerPitch, nx*sizeof(float2), ny) );
     cudaCHK( cudaMallocPitch(&ZHdat_pitchedMEM_hst, &tmppitch, nx*sizeof(float2), ny) );
-    if (tmppitch != MNpitch) { // just a check
+    if (tmppitch != LayerPitch) { // just a check
         printf("Error @%d, %s\n",__LINE__, __FILE__ ); // not reach
         exit(1);
     }
@@ -304,16 +307,16 @@ void cudaMallocMNZH(size_t ny, size_t nx, float* Z_f, float* H_f){
     cudaCHK( cudaMemcpyToSymbol(ZHout_pitchedMEM_dev, &ZHout_pitchedMEM_hst, sizeof(float2*)) );
 
     //pitch symbol
-    cudaCHK( cudaMemcpyToSymbol(MNpitch_dev, &MNpitch, sizeof(size_t)) );
+    cudaCHK( cudaMemcpyToSymbol(LayerPitch_dev, &LayerPitch, sizeof(size_t)) );
 
     // copy the initial values into device
-    cudaCHK( cudaMemset2D(MNdat_pitchedMEM_hst, MNpitch, 0, nx*sizeof(float2), ny) );
-    // cudaCHK( cudaMemcpy2D(MNdat_pitchedMEM_hst, MNpitch, MNcontainer, nx*sizeof(float2)
+    cudaCHK( cudaMemset2D(MNdat_pitchedMEM_hst, LayerPitch, 0, nx*sizeof(float2), ny) );
+    // cudaCHK( cudaMemcpy2D(MNdat_pitchedMEM_hst, LayerPitch, MNcontainer, nx*sizeof(float2)
     //                                             , nx*sizeof(float2), ny, cudaMemcpyHostToDevice) );
 
-    cudaCHK( cudaMemcpy2D(ZHdat_pitchedMEM_hst, MNpitch, ZHcontainer, nx*sizeof(float2)//since cuda_update_ switches out/dat pointers
+    cudaCHK( cudaMemcpy2D(ZHdat_pitchedMEM_hst, LayerPitch, ZHcontainer, nx*sizeof(float2)//since cuda_update_ switches out/dat pointers
                                                 , nx*sizeof(float2), ny, cudaMemcpyHostToDevice) ); // , H must exist in both memory
-    cudaCHK( cudaMemcpy2D(ZHout_pitchedMEM_hst, MNpitch, ZHcontainer, nx*sizeof(float2)//since cuda_update_ switches out/dat pointers
+    cudaCHK( cudaMemcpy2D(ZHout_pitchedMEM_hst, LayerPitch, ZHcontainer, nx*sizeof(float2)//since cuda_update_ switches out/dat pointers
                                                 , nx*sizeof(float2), ny, cudaMemcpyHostToDevice) ); // , H must exist in both memory
 
 
