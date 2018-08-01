@@ -395,10 +395,12 @@
 		 ENDIF
 
 
+         CALL PARTICLE_TRANSPORT_LAUNCH()
+
 !.......UPDATE VARIABLES OF LAYER 01 (LO) FOR NEXT TIME STEP
          CALL CHANGE()
 !.......OUTPUT TIME SEQUENCE AND TIME HISTORY RECORDS AT T = K*LO%DT
-!!!!!!!!!!!!!!!!!!!!      COMMEMT ADDED BY TAO     !!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!      COMMEMTED BY TAO     !!!!!!!!!!!!!!!!!!!!!!!!!!
 !          WRITE (99,*) TIME                                                !
 ! 		 IF (OUT_OPT.EQ.1 .OR. OUT_OPT.EQ.2) THEN                           !
 !             DO NIC = 1,NUM_REC                                            !
@@ -449,7 +451,7 @@
 !.....TRANSFER INFORMATION (FREE SURFACE ELEVATION, VOLUME FLUX IN
 !      X, Y DIRECTIONS)FROM LAST STEP TO NEXT STEP (FOR OUTEST LAYER)
 !----------------------------------------------------------------------
-!!!!!!!!!!!!!!!!!!!!      COMMEMT ADDED BY TAO     !!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!      COMMEMTED BY TAO     !!!!!!!!!!!!!!!!!!!!!!!!!!
 !     USE LAYER_PARAMS
 !     TYPE (LAYER)	:: LO
 !       IF (LO%LAYGOV .GT. 1) THEN
@@ -475,7 +477,7 @@
 ! 	     LO%HT(:,:,1) = LO%HT(:,:,2)
 ! 	     LO%H(:,:) = LO%H(:,:) + LO%HT(:,:,2) - LO%HT(:,:,1)
 ! 	  ENDIF
-!!!!!!!!!!!!!!!!!!!!      COMMEMT ADDED BY TAO     !!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!      COMMEMTED BY TAO     !!!!!!!!!!!!!!!!!!!!!!!!!!
 
       CALL CUDA_UPDATE()
 !

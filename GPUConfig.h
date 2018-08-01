@@ -39,8 +39,8 @@
     #define MAXAMP_KERNEL_CONFG
     #define MAXAMP_BLOCK 512
     extern size_t GridMaxAmp;
-    #define BLOCKX_MAXAMP 32
-    #define BLOCKY_MAXAMP 32
+    #define BLOCKX_MAXAMP 8
+    #define BLOCKY_MAXAMP 8
     extern dim3 DimBlockMaxAmp;
     extern dim3 DimGridMaxAmp;
 #endif

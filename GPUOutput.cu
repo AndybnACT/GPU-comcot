@@ -21,7 +21,7 @@ extern "C" void maxamp_launch_(void){
     // fi = clock();
 
     st = clock();
-    maximum_recorder_kernel_tex <<< GridMaxAmp, MAXAMP_BLOCK >>> (Zmax_hst);
+    maximum_recorder_kernel_tex <<< DimGridMaxAmp, DimBlockMaxAmp >>> (Zmax_hst);
     cudaDeviceSynchronize();
     err = cudaGetLastError();
     cudaERROR(err);
@@ -52,13 +52,13 @@ __global__ void maximum_recorder_kernel_tex(float *max_array){
     float eta_now;
     float eta_max;
     if (x < size_dev[0] && y < size_dev[1]) {
-        if (tex2D<float2>(ZHtext, x, y).y > 0.0f) {
+        // if (tex2D<float2>(ZHtext, x, y).y > 0.0f) {
             eta_now = tex2D<float2>(ZHtext, x, y).x;
             eta_max = max_array[ID(x,y)];
             if (eta_max < eta_now) {
                 max_array[ID(x,y)] = eta_now;
             }
-        }
+        // }
     }
 }
 

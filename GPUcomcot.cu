@@ -178,8 +178,8 @@ extern "C" void cuda_boot_(float *R1_f, float *R2_f, float *R3_f, float *R4_f, f
     DimGridMass      = dim3((size_hst[0]-1)/(31*(BLOCKX_MASS>>5)) + 1, LOAD_PER_SM*(uint32_t)dev_prop.multiProcessorCount, 1);
     DimGridOpenBD_LR = dim3((size_hst[0]-1)/(31*(BLOCKX_OPENBD>>5)) + 1, 1, 1);
     DimGridOpenBD_TB = dim3((size_hst[1]-1)/(31*(BLOCKX_OPENBD>>5)) + 1, 1, 1);
-    GridMaxAmp       = (size_hst[2]-1)/MAXAMP_BLOCK + 1;
-    DimGridMaxAmp    = dim3((size_hst[0]-1)/BLOCKX_MAXAMP, (size_hst[1]-1)/BLOCKY_MAXAMP, 1);
+    // GridMaxAmp       = (size_hst[2]-1)/MAXAMP_BLOCK + 1;
+    DimGridMaxAmp    = dim3((size_hst[0]-1)/BLOCKX_MAXAMP + 1, (size_hst[1]-1)/BLOCKY_MAXAMP + 1, 1);
 
     //streams
     for (size_t i = 0; i < NUMSTREAM; i++) {
