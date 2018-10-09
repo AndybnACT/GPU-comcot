@@ -62,7 +62,7 @@ make
 
 ## Run a Simulation
 
-- The input file of COMCOT is called `comcot.ctl`. Modify the file to specify a simulation time, time step, fault parameters, and grid settings. Additionally, a corresponding topographic file (available at [etopo](https://www.ngdc.noaa.gov/mgg/global/)) is required for grid construction, and the path to the file should be provided in `comcot.ctl`. For example, the fresh downloaded `comcot.ctl` takes `../etopo_halk2.xyz` as the topographic file and simulate the 2011 Tōhoku tsunami.
+- The input file of COMCOT is called `comcot.ctl`. Modify the file to specify a simulation time, time step, fault parameters, and grid settings. Additionally, a corresponding topographic file (available at [etopo](https://www.ngdc.noaa.gov/mgg/global/)) is required for grid construction, and the path to the file should be provided in `comcot.ctl`. For example, the fresh downloaded `comcot.ctl` takes `../etopo_halk2.xyz` as the topographic file and simulate the 2011 Tōhoku Tsunami.
 
 - To run the simulation, simply execute the program `comcot`
 
@@ -77,10 +77,18 @@ make
 ```shell
 python plot_dat.py .
 ```
+- Here is the 2011 Tōhoku Tsunami propagation animation from those `.png` files (Note: Region in South Pacific ocean was clipped out by the script)
+![](https://i.imgur.com/cFhekyK.gif)
 
+## Performance Comparisons (2926x1786 grids, OMP/ifort/gfortran)
+- There is an closed source OpenMP parallelized version of comcot developed by [Tsunami Lab](http://tsunami.ihs.ncu.edu.tw/tsunami/Forecasting_the_wrath_of_a_tsunami.htm) ([SCI-link](https://www.sciencedirect.com/science/article/pii/S0029801815000220)), and the overall speedup versus sigle-core execution time on i5-2500 CPU is shown below.
+![](https://i.imgur.com/u225vwi.png)
 
-## Features
+- We can find that the maximum speedup on OMP-version is merely at 15x, while GPU distinctively obtain an overall speedup around 138 regardless which CPU model adopted.
+![](https://i.imgur.com/UKeNy0O.png)
 
+- Taking hardware cost and accessibilities into considerations, a comparison table is listed as the following: (note: gfortran version of comcot: [comcot-gfortran](https://github.com/AndybnACT/comcot-gfortran))
+![](https://i.imgur.com/FmMLp6T.png)
 
 ## **Acknowledgements**
 
