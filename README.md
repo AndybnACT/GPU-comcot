@@ -78,6 +78,8 @@ make
 python plot_dat.py .
 ```
 - Here is the 2011 Tōhoku Tsunami propagation animation from those `.png` files (Note: Region in South Pacific ocean was clipped out by the script)
+
+
 ![](https://i.imgur.com/cFhekyK.gif)
 
 ## Performance Comparisons (2926x1786 grids, OMP/ifort/gfortran)
@@ -90,6 +92,17 @@ python plot_dat.py .
 - Taking hardware cost and accessibilities into considerations, a comparison table is listed as the following: (note: gfortran version of comcot: [comcot-gfortran](https://github.com/AndybnACT/comcot-gfortran))
 ![](https://i.imgur.com/FmMLp6T.png)
 
+### Scalability (2926x1786 grids, GTX1060 vs Tesla P100)
+- Both GTX1060 and Tesla P100 feature similar computing architecture(sm6.1, sm6.0). Unlike GTX1060, howerver, the number of cores and memory bandwidth are respectively 2.8 and 3.8 times higher in Tesla P100. Thus, it is well suited to test our code scalability using these cards. Therefore, the test case were carried out on both models profiled by `nvvp` and results are shown below:
+> - According to the profiler, the geometric mean regrading speedup over all computation kernels is 2.27. As we may observe, `momts` and `maximum_recorder` kernel obtained a superlinear speedup at 3.21 and 3.24. The reason is that these kernel depend on heavy memory operations and hence performance were limited by the memory bandwidth of GTX1060.
+
+
+>> ![P100](https://i.imgur.com/oAOdZFp.png)  
+> - kernel profile of GPU-comcot running on Tesla P100. Total time consumption: 121 sec 
+
+
+>> ![GTX1060](https://i.imgur.com/w5xZJSw.png)  
+> - kernel profile of GPU-comcot running on GTX1060. Total time consumption: 181 sec
 ## **Acknowledgements**
 
-GPU version of COMCOT was developed by Tao, Chiu at Tsunami reseach group, IHOS, NCU and the GPU codes are protected under GPL v3.0. The goal of this work is to librate, coporate ideas with the community and accelerate the development of a high-throughput tsunami warning system at a relatively low cost. Original COMCOT version can be found at [here](http://223.4.213.26/archive/tsunami/cornell/comcot_down.htm).
+GPU version of COMCOT was developed by Tao, Chiu at Tsunami reseach group, IHOS, NCU and the GPU codes are protected under GPL v3.0. The goal of this work is to librate, cooperate ideas with the community and stimulate the development of a tsunami eraly warning system at a relatively low cost. Original COMCOT version can be found at [here](http://223.4.213.26/archive/tsunami/cornell/comcot_down.htm).
