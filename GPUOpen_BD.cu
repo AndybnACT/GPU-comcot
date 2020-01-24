@@ -4,12 +4,14 @@
 #include "GPUOpen_BD.h"
 
 extern "C" void openbd_launch_(float *Z_f_complete) {
+    /* Only for outest layer, assume its layerid = 0 */
+    struct GPU_Layer *L = ldlayer(1);
 
     cudaError_t err;
-    openbd_kernel<<< DimGridOpenBD_LR, DimBlockOpenBD, 0, EXECstream[0] >>>(MNdat_hst, H_hst, LEFT);// MN has been changed (:,:,1) <--> (:,:,2)
-    openbd_kernel<<< DimGridOpenBD_LR, DimBlockOpenBD, 0, EXECstream[1] >>>(MNdat_hst, H_hst, RIGHT);// so use M(:,:,1) directly
-    openbd_kernel<<< DimGridOpenBD_TB, DimBlockOpenBD, 0, EXECstream[2] >>>(MNdat_hst, H_hst, TOP);
-    openbd_kernel<<< DimGridOpenBD_TB, DimBlockOpenBD, 0, EXECstream[3] >>>(MNdat_hst, H_hst, BOTTOM);
+    openbd_kernel<<< L->DimGridOpenBD_LR, DimBlockOpenBD, 0, EXECstream[0] >>>(*L, LEFT);// MN has been changed (:,:,1) <--> (:,:,2)
+    openbd_kernel<<< L->DimGridOpenBD_LR, DimBlockOpenBD, 0, EXECstream[1] >>>(*L, RIGHT);// so use M(:,:,1) directly
+    openbd_kernel<<< L->DimGridOpenBD_TB, DimBlockOpenBD, 0, EXECstream[2] >>>(*L, TOP);
+    openbd_kernel<<< L->DimGridOpenBD_TB, DimBlockOpenBD, 0, EXECstream[3] >>>(*L, BOTTOM);
     cudaDeviceSynchronize();
     err = cudaGetLastError();
     cudaERROR(err);
@@ -28,7 +30,13 @@ extern "C" void openbd_launch_(float *Z_f_complete) {
 }
 
 
-__global__ void openbd_kernel(const float* __restrict__ MN, const float* __restrict__ H, bdside BOUNDARY) {
+__global__ void openbd_kernel(struct GPU_Layer L, bdside BOUNDARY) {
+    
+    const float* __restrict__ MN = L.MNdat_hst;
+    const float* __restrict__ H = L.H_hst;
+    float* __restrict__ Z_out_dev = L.Zout_hst;
+    const uint32_t __restrict__ *size_dev = all_size_dev[L.lid];
+    
     #define UB 99.0
     float ztmp=0.0, h, m, n, cc;
     uint32_t row=0, col=0;

@@ -48,6 +48,33 @@
     #define ID2E(row,col,dim) size_dev[2]*(dim) + ID(row,col)
 #endif
 
+#define MAX_LAYERS 20   
+struct GPU_Layer {
+    int lid;
+    int plid;
+    int lvl;
+    float *Zdat_hst, *MNdat_hst;
+    float *Zout_hst, *MNout_hst;
+    float *R24_hst, *R35_hst, *H_hst;
+    float *R_MASS_hst;
+    float *Zmax_hst;
+    uint32_t size_hst[4];
+    
+    dim3 DimGridMomt_MN;
+    dim3 DimGridMomt;
+    dim3 DimGridMass;
+    dim3 DimGridOpenBD_LR;
+    dim3 DimGridOpenBD_TB;
+    size_t GridMaxAmp;
+};
+extern struct GPU_Layer Layer_struct[MAX_LAYERS];
+static inline struct GPU_Layer* ldlayer(int lid){
+    if (lid >= MAX_LAYERS || lid < 0) {
+        printf("invalid layer id %d\n", lid);
+        return NULL;
+    }
+    return Layer_struct + lid;
+}
 
 #ifndef CUDA_GLOB_VAR
     extern float *Zout_hst, *MNout_hst;
@@ -60,11 +87,11 @@
     // extern __device__ float *R24_dev, *H_dev;
     // extern __device__ float *Z_dat_dev, *MN_dat_dev;
     extern __device__ float *MN_out_dev, *Z_out_dev;
-    extern __constant__ __device__ uint32_t size_dev[4];
+    extern __constant__ __device__ uint32_t all_size_dev[MAX_LAYERS][4];
     // extern texture <float, cudaTextureType2D, cudaReadModeElementType> ZtexRef;
     // extern texture <float, cudaTextureType2D, cudaReadModeElementType> MtexRef;
     // extern texture <float, cudaTextureType2D, cudaReadModeElementType> NtexRef;
     extern float *Zmax_hst;
-    extern uint32_t size_hst[4];
+    extern uint32_t all_size[MAX_LAYERS][4]; // mirror of all_size_dev
     extern cudaDeviceProp dev_prop;
 #endif

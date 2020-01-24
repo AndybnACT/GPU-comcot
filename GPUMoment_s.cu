@@ -1,20 +1,17 @@
 #include "GPUHeader.h"
 #include "GPUConfig.h"
 
-extern "C" void momt_launch_(float*,float*,float*);
+extern "C" void momt_launch_(float*,float*,float*, int*);
 __global__ void momts_kernel(const float* __restrict__,const float* __restrict__,
                     const float* __restrict__,const float* __restrict__,const float* __restrict__);
-__global__ void momt_kernelM(const float* __restrict__, const float* __restrict__,
-                             const float* __restrict__, const float* __restrict__,
-                             const float* __restrict__);
- __global__ void momt_kernelN(const float* __restrict__, const float* __restrict__,
-                              const float* __restrict__, const float* __restrict__,
-                              const float* __restrict__);
+__global__ void momt_kernelM(struct GPU_Layer L);
+__global__ void momt_kernelN(struct GPU_Layer L);
 
-extern "C" void momt_launch_(float *M_f, float *N_f, float *Z_f /*FUTURE: delete*/) {
+extern "C" void momt_launch_(float *M_f, float *N_f, float *Z_f, int *lid) {
     float* tmp;
     clock_t st, fi;
     cudaError_t err;
+    struct GPU_Layer *L = ldlayer(*lid);
 
     #ifdef DEBUG
         printf("Z_cu vs Z_f\n");
@@ -37,8 +34,8 @@ extern "C" void momt_launch_(float *M_f, float *N_f, float *Z_f /*FUTURE: delete
 
 
     st = clock();
-    momt_kernelM <<<  DimGridMomt_MN, DimBlockMomt_MN, 0, EXECstream[0] >>> (Zout_hst, MNdat_hst, R24_hst, R35_hst, H_hst);
-    momt_kernelN <<<  DimGridMomt_MN, DimBlockMomt_MN, 0, EXECstream[1] >>> (Zout_hst, MNdat_hst, R24_hst+size_hst[2], R35_hst+size_hst[1], H_hst);
+    momt_kernelM <<<  L->DimGridMomt_MN, DimBlockMomt_MN, 0, EXECstream[0] >>> (*L);
+    momt_kernelN <<<  L->DimGridMomt_MN, DimBlockMomt_MN, 0, EXECstream[1] >>> (*L);
     cudaDeviceSynchronize();
     err = cudaGetLastError();
     cudaERROR(err);
@@ -65,9 +62,17 @@ extern "C" void momt_launch_(float *M_f, float *N_f, float *Z_f /*FUTURE: delete
 
 }
 
-__global__ void momt_kernelM(const float* __restrict__ Z, const float* __restrict__ MN,
-                             const float* __restrict__ R2, const float* __restrict__ R3,
-                             const float* __restrict__ H) {
+__global__ void momt_kernelM(struct GPU_Layer L) {
+    
+     const float* __restrict__ Z = L.Zout_hst;
+     const float* __restrict__ MN = L.MNdat_hst;
+     const float* __restrict__ R2 = L.R24_hst;
+     const float* __restrict__ R3 = L.R35_hst;
+     const float* __restrict__ H = L.H_hst;
+     float* __restrict__ MN_out_dev = L.MNout_hst;
+     const uint32_t __restrict__ *size_dev = all_size_dev[L.lid];
+     
+     
      uint32_t row = blockIdx.x*31*(blockDim.x>>5) + 31*(threadIdx.x>>5) + threadIdx.x%32;
      uint32_t col = blockIdx.y*(size_dev[1]/gridDim.y);
      uint32_t col_end = (blockIdx.y == gridDim.y-1)? size_dev[1]:(blockIdx.y+1)*(size_dev[1]/gridDim.y)+1;
@@ -136,9 +141,16 @@ __global__ void momt_kernelM(const float* __restrict__ Z, const float* __restric
 
 
 
-__global__ void momt_kernelN(const float* __restrict__ Z, const float* __restrict__ MN,
-                             const float* __restrict__ R4, const float* __restrict__ R5,
-                             const float* __restrict__ H) {
+__global__ void momt_kernelN(struct GPU_Layer L) {
+                                 
+    const float* __restrict__ Z = L.Zout_hst;
+    const float* __restrict__ MN = L.MNdat_hst;
+    const float* __restrict__ R4 = L.R24_hst + L.size_hst[2];
+    const float* __restrict__ R5 = L.R35_hst + L.size_hst[1];
+    const float* __restrict__ H = L.H_hst;
+    float* __restrict__ MN_out_dev = L.MNout_hst;
+    const uint32_t __restrict__ *size_dev = all_size_dev[L.lid];
+    
 
     uint32_t row = blockIdx.x*31*(blockDim.x>>5) + 31*(threadIdx.x>>5) + threadIdx.x%32;
     uint32_t col = blockIdx.y*(size_dev[1]/gridDim.y);
@@ -211,7 +223,7 @@ __global__ void momt_kernelN(const float* __restrict__ Z, const float* __restric
 
 }
 
-
+/*
 __global__ void momts_kernel(const float* __restrict__ Z, const float* __restrict__ MN,
                              const float* __restrict__ R24, const float* __restrict__ R35,
                              const float* __restrict__ H) {
@@ -293,3 +305,4 @@ __global__ void momts_kernel(const float* __restrict__ Z, const float* __restric
         }
     }
 }
+*/

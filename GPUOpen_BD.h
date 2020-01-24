@@ -10,7 +10,7 @@
 
 
     extern "C" void openbd_launch_(float*);
-    __global__ void openbd_kernel(const float* __restrict__, const float* __restrict__, bdside);
+    __global__ void openbd_kernel(struct GPU_Layer, bdside);
 
 
 #endif

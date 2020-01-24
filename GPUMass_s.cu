@@ -1,21 +1,21 @@
 #include "GPUHeader.h"
 #include "GPUConfig.h"
 
-extern "C" void mass_launch_(const float*, float*, const float*);
-__global__ void mass_kernel(const float* __restrict__,const float* __restrict__,
-                    const float* __restrict__,const float* __restrict__);
+extern "C" void mass_launch_(const float*, float*, const float*, const int*);
+__global__ void mass_kernel(struct GPU_Layer);
 
 
 
-extern "C" void mass_launch_(const float* Z_f, float* Z_f_complete, const float *H_f){
+extern "C" void mass_launch_(const float* Z_f, float* Z_f_complete, const float *H_f, const int *lid){
     cudaError_t err;
     clock_t st, fi;
-
+    struct GPU_Layer *L = ldlayer(*lid);
+    
     // cudaCHK( cudaMemcpy(H_hst, H_f, size_hst[3], cudaMemcpyHostToDevice) );
     //cudaCHK( cudaMemcpy(Zdat_hst, Z_f, size_hst[3], cudaMemcpyHostToDevice) );
 
     st = clock();
-    mass_kernel <<< DimGridMass, DimBlockMass >>> (Zdat_hst, MNdat_hst, R_MASS_hst, H_hst);// FUTURE MULTIPLE KERNELS
+    mass_kernel <<< L->DimGridMass, DimBlockMass >>> (*L);
     cudaDeviceSynchronize();
     err = cudaGetLastError();
     cudaERROR(err);
@@ -36,13 +36,20 @@ extern "C" void mass_launch_(const float* Z_f, float* Z_f_complete, const float 
     #endif
 }
 
-__global__ void mass_kernel(const float* __restrict__ Z, const float* __restrict__ MN,
-                            const float* __restrict__ R_MASS, const float* __restrict__ H){
+__global__ void mass_kernel(struct GPU_Layer L){
                                 /*+-->+-->+---->|
                                   +-->+-->+---->|
                                   +-->+-->+---->|
                                   +-->+-->+---->|
                                   */
+                                  
+    const float* __restrict__ Z = L.Zdat_hst;
+    const float* __restrict__ MN = L.MNdat_hst;
+    const float* __restrict__ R_MASS = L.R_MASS_hst;
+    const float* __restrict__ H = L.H_hst;
+    const uint32_t __restrict__ *size_dev = all_size_dev[L.lid];
+    float* __restrict__ Z_out_dev = L.Zout_hst;
+    
     //designed for architectures whose warpsize=32
     uint32_t row = blockIdx.x*31*(blockDim.x>>5) + 31*(threadIdx.x>>5) + threadIdx.x%32;
     uint32_t col = blockIdx.y*(size_dev[1]/gridDim.y);

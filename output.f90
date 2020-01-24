@@ -746,12 +746,6 @@
 	  COMMON /CONS/ ELMAX,GRAV,PI,R_EARTH,GX,EPS,ZERO,ONE,NUM_GRID,	&
 					NUM_FLT,V_LIMIT,RAD_DEG,RAD_MIN
 
-     if ( k .GT. 0 ) then
-         CALL CUDA_GETZ(LO%Z(:,:,1))
-         CALL CUDA_GETMN(LO%M(:,:,1), LO%N(:,:,1))
-     end if
-
-
       CALL DATA_PRT (K,LO)
       DO I=1,NUM_GRID
 	     IF (LA(I)%LAYSWITCH .EQ. 0)  CALL DATA_PRT (K,LA(I))
@@ -778,6 +772,12 @@
       CHARACTER(LEN=20) FNAME
 	  COMMON /CONS/ ELMAX,GRAV,PI,R_EARTH,GX,EPS,ZERO,ONE,NUM_GRID,	&
 					NUM_FLT,V_LIMIT,RAD_DEG,RAD_MIN
+                    
+      if ( k .GT. 0 ) then
+          CALL CUDA_GETZ(LO%Z(:,:,1), LO%ID)
+          CALL CUDA_GETMN(LO%M(:,:,1), LO%N(:,:,1), LO%ID)
+      end if
+      
 	  Z = 0.0
 	  Z(:,:) = LO%Z(:,:,1)
 	  DO I = 1,LO%NX
@@ -915,7 +915,7 @@
       K = NINT(TIME/3600.0)
 	  SECS = 3600.0*K
       IF (K2.GT.K1 .OR. TIME.GE.TEND-2.0*LO%DT) THEN
-         CALL CUDA_GETZMAX(LO%Z_MAX(:,:))
+         CALL CUDA_GETZMAX(LO%Z_MAX(:,:), LO%ID)
 		 ALLOCATE(TMP(LO%NX,LO%NY))
 		 DO I = 1,LO%NX
 		    DO J = 1,LO%NY

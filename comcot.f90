@@ -265,7 +265,11 @@
 !......................................................................
 	  !PAUSE
 
-      CALL CUDA_BOOT(LO%R1, LO%R2, LO%R3, LO%R4, LO%R5, LO%R6, LO%R11, LO%H, LO%Z, LO%NX, LO%NY)
+      CALL GCOMCOT_INIT_GPU()
+      CALL GCOMCOT_INIT_LAYER(LO%ID, LO%PARENT, LO%LEVEL,           &
+                              LO%R1, LO%R2, LO%R3, LO%R4, LO%R5,    &
+                              LO%R6, LO%R11, LO%H, LO%Z, LO%NX, LO%NY)
+
 !////////////////////// SIMULATION BEGINS /////////////////////////////
       WRITE (*,*) '    '
 	  WRITE (*,*) '***************** OUTPUT RESULTS ******************'
@@ -332,7 +336,7 @@
          ! call system_clock ( t2, trate, tmax )
          ! write ( *, * ) 'Serial Code Elapsed real time = ', real ( t2 - t1 ) / real ( trate )
          ! WRITE (*,*) "COMPUTING MASS EQ ON GPU"
-         CALL MASS_LAUNCH(LO%Z(:,:,1),LO%Z(:,:,2),LO%H(:,:))
+         CALL MASS_LAUNCH(LO%Z(:,:,1),LO%Z(:,:,2),LO%H(:,:), LO%ID)
 
 !.......SOLVE RADIATION OPEN BOUNDARY
          ! CALL OPEN (LO)
@@ -369,7 +373,7 @@
          ! write ( *, * ) 'Serial Code Elapsed real time = ', real ( t2 - t1 ) / real ( trate )
          !
          ! WRITE(*,*) "COMPUTING MOMT EQ ON GPU"
-         CALL MOMT_LAUNCH(LO%M(:,:,2), LO%N(:,:,2), LO%Z(:,:,2))
+         CALL MOMT_LAUNCH(LO%M(:,:,2), LO%N(:,:,2), LO%Z(:,:,2), LO%ID)
 
 !.......USE SPONGE LAYER .....
          IF (BC_TYPE.EQ.1) THEN
@@ -390,7 +394,7 @@
 
 
 		 IF (OUT_OPT.EQ.0 .OR. OUT_OPT.EQ.2) THEN
-            CALL MAXAMP_LAUNCH()
+            CALL MAXAMP_LAUNCH(LO%ID)
 		    CALL MAX_AMP (LO,LA,TIME,TEND)
 		 ENDIF
 
@@ -477,7 +481,7 @@
 ! 	  ENDIF
 !!!!!!!!!!!!!!!!!!!!      COMMEMT ADDED BY TAO     !!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      CALL CUDA_UPDATE()
+      CALL CUDA_UPDATE_LAYER(1)
 !
       RETURN
       END
