@@ -10,8 +10,6 @@
         #define CHKR 720
         #define CHKC 304
         #define CHKSI 10
-        #define ID_hst(row,col) col*size_hst[0] + row
-        //#define ID2E_hst(row,col,dim) size_hst[2]*dim + ID(row,col)
         extern float* tmpout;
     #endif
 #endif
@@ -58,7 +56,7 @@ struct GPU_Layer {
     float *R24_hst, *R35_hst, *H_hst;
     float *R_MASS_hst;
     float *Zmax_hst;
-    uint32_t size_hst[4];
+    uint32_t l_size[4];
     
     dim3 DimGridMomt_MN;
     dim3 DimGridMomt;
@@ -77,21 +75,7 @@ static inline struct GPU_Layer* ldlayer(int lid){
 }
 
 #ifndef CUDA_GLOB_VAR
-    extern float *Zout_hst, *MNout_hst;
-    extern float *MNdat_hst, *Zdat_hst;
-    extern float *R24_hst, *R35_hst, *H_hst;
-    //float *R1_hst, *R6_hst, *R11_hst;
-    extern float *R_MASS_hst;
-
-    // extern __device__ float *R35_dev;
-    // extern __device__ float *R24_dev, *H_dev;
-    // extern __device__ float *Z_dat_dev, *MN_dat_dev;
-    extern __device__ float *MN_out_dev, *Z_out_dev;
     extern __constant__ __device__ uint32_t all_size_dev[MAX_LAYERS][4];
-    // extern texture <float, cudaTextureType2D, cudaReadModeElementType> ZtexRef;
-    // extern texture <float, cudaTextureType2D, cudaReadModeElementType> MtexRef;
-    // extern texture <float, cudaTextureType2D, cudaReadModeElementType> NtexRef;
-    extern float *Zmax_hst;
     extern uint32_t all_size[MAX_LAYERS][4]; // mirror of all_size_dev
     extern cudaDeviceProp dev_prop;
 #endif

@@ -14,7 +14,7 @@ extern "C" void maxamp_launch_(const int *lid){
     struct GPU_Layer *L = ldlayer(*lid);
 
     st = clock();
-    maximum_recorder_kernel <<< L->GridMaxAmp, MAXAMP_BLOCK >>> (L->Zmax_hst, L->Zout_hst, L->size_hst[2]);
+    maximum_recorder_kernel <<< L->GridMaxAmp, MAXAMP_BLOCK >>> (L->Zmax_hst, L->Zout_hst, L->l_size[2]);
     cudaDeviceSynchronize();
     err = cudaGetLastError();
     cudaERROR(err);
@@ -40,21 +40,21 @@ __global__ void maximum_recorder_kernel(float *max_array, const float* __restric
 
 extern "C" void cuda_getz_(float *Z_f, int *lid) {
     struct GPU_Layer *L = ldlayer(*lid);
-    cudaCHK( cudaMemcpy(Z_f, L->Zout_hst, L->size_hst[3], cudaMemcpyDeviceToHost) );
+    cudaCHK( cudaMemcpy(Z_f, L->Zout_hst, L->l_size[3], cudaMemcpyDeviceToHost) );
 }
 
 extern "C" void cuda_getmn_(float *M_f, float *N_f, int *lid) {
     struct GPU_Layer *L = ldlayer(*lid);
-    cudaCHK( cudaMemcpy(M_f, L->MNout_hst, L->size_hst[3], cudaMemcpyDeviceToHost) );
-    cudaCHK( cudaMemcpy(N_f, L->MNout_hst+L->size_hst[2], L->size_hst[3], cudaMemcpyDeviceToHost) );
+    cudaCHK( cudaMemcpy(M_f, L->MNout_hst, L->l_size[3], cudaMemcpyDeviceToHost) );
+    cudaCHK( cudaMemcpy(N_f, L->MNout_hst+L->l_size[2], L->l_size[3], cudaMemcpyDeviceToHost) );
 }
 
 extern "C" void cuda_getzmax_(float *Zmax_f, int *lid) {
     struct GPU_Layer *L = ldlayer(*lid);
-    cudaCHK( cudaMemcpy(Zmax_f, L->Zmax_hst, L->size_hst[3], cudaMemcpyDeviceToHost) );
+    cudaCHK( cudaMemcpy(Zmax_f, L->Zmax_hst, L->l_size[3], cudaMemcpyDeviceToHost) );
 }
 
 // void cuda_getmnmax_(float *Mmax_f, float *Nmax_f) {
-//     cudaCHK( cudaMemcpy(Mmax_f, MNmax_hst, size_hst[3], cudaMemcpyDeviceToHost) );
-//     cudaCHK( cudaMemcpy(Nmax_f, MNmax_hst+size_hst[2], size_hst[3], cudaMemcpyDeviceToHost) );
+//     cudaCHK( cudaMemcpy(Mmax_f, MNmax_hst, l_size[3], cudaMemcpyDeviceToHost) );
+//     cudaCHK( cudaMemcpy(Nmax_f, MNmax_hst+l_size[2], l_size[3], cudaMemcpyDeviceToHost) );
 // }

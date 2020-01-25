@@ -10,9 +10,6 @@ extern "C" void mass_launch_(const float* Z_f, float* Z_f_complete, const float 
     cudaError_t err;
     clock_t st, fi;
     struct GPU_Layer *L = ldlayer(*lid);
-    
-    // cudaCHK( cudaMemcpy(H_hst, H_f, size_hst[3], cudaMemcpyHostToDevice) );
-    //cudaCHK( cudaMemcpy(Zdat_hst, Z_f, size_hst[3], cudaMemcpyHostToDevice) );
 
     st = clock();
     mass_kernel <<< L->DimGridMass, DimBlockMass >>> (*L);
@@ -21,19 +18,10 @@ extern "C" void mass_launch_(const float* Z_f, float* Z_f_complete, const float 
     cudaERROR(err);
     fi = clock();
 
+#ifdef DEBUG
+    printf("TIME SPENT ON GPU %f\n",(float)(fi-st)/CLOCKS_PER_SEC);
 
-    #ifdef DEBUG
-        printf("TIME SPENT ON GPU %f\n",(float)(fi-st)/CLOCKS_PER_SEC);
-        // printf("printing information for debugging\n" );
-        // cudaCHK( cudaMemcpy(tmpout, Zout_hst, size_hst[3], cudaMemcpyDeviceToHost) );
-        // for (size_t i = 0; i < size_hst[2]; i++) {
-        //     if (abs(tmpout[i] - Z_f_complete[i]) > ERROR) {
-        //         printf("Z[%d] Z_cu:%e Z_f:%e %e\n", i, tmpout[i], Z_f_complete[i], tmpout[i] - Z_f_complete[i]);
-        //     }
-        // }
-    #else
-        // cudaCHK( cudaMemcpy(Z_f_complete, Zout_hst, size_hst[3], cudaMemcpyDeviceToHost) );
-    #endif
+#endif /* DEBUG */
 }
 
 __global__ void mass_kernel(struct GPU_Layer L){

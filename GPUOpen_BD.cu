@@ -1,7 +1,14 @@
 #include "GPUHeader.h"
 #include "GPUConfig.h"
 
-#include "GPUOpen_BD.h"
+typedef enum bd_side{
+    LEFT,
+    RIGHT,
+    TOP,
+    BOTTOM,
+} bdside;
+
+__global__ void openbd_kernel(struct GPU_Layer, bdside);
 
 extern "C" void openbd_launch_(float *Z_f_complete) {
     /* Only for outest layer, assume its layerid = 0 */
@@ -17,15 +24,15 @@ extern "C" void openbd_launch_(float *Z_f_complete) {
     cudaERROR(err);
 
 
-    #ifdef DEBUG
-        printf("printing information for debugging\n" );
-        cudaCHK( cudaMemcpy(tmpout, Zout_hst, size_hst[3], cudaMemcpyDeviceToHost) );
-        for (size_t i = 0; i < size_hst[2]; i++) {
-            if (abs(tmpout[i] - Z_f_complete[i]) > ERROR) {
-                printf("Z[%d,%d] Z_cu:%e Z_f:%e %e\n", i%size_hst[0], i/size_hst[0] , tmpout[i], Z_f_complete[i], tmpout[i] - Z_f_complete[i]);
-            }
+#ifdef DEBUG
+    printf("printing information for debugging\n" );
+    cudaCHK( cudaMemcpy(tmpout, Zout_hst, l_size[3], cudaMemcpyDeviceToHost) );
+    for (size_t i = 0; i < l_size[2]; i++) {
+        if (abs(tmpout[i] - Z_f_complete[i]) > ERROR) {
+            printf("Z[%d,%d] Z_cu:%e Z_f:%e %e\n", i%l_size[0], i/l_size[0] , tmpout[i], Z_f_complete[i], tmpout[i] - Z_f_complete[i]);
         }
-    #endif
+    }
+#endif /* DEBUG */
 
 }
 

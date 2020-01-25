@@ -70,7 +70,7 @@ GPUMass_s.o: GPUMass_s.cu
 GPUMoment_s.o: GPUMoment_s.cu
 	$(NVCC) -c -rdc=true $(NVCC_OPT) $(NVFLAGS) GPUMoment_s.cu
 
-GPUOpen_BD.o: GPUOpen_BD.cu GPUOpen_BD.h
+GPUOpen_BD.o: GPUOpen_BD.cu
 	$(NVCC) -c -rdc=true $(NVCC_OPT) $(NVFLAGS) GPUOpen_BD.cu
 
 GPUOutput.o: GPUOutput.cu
