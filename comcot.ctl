@@ -85,18 +85,18 @@
 #===============================================:===============================
 #  Parameters for Sub-level grid -- layer 02    :Values                        |
 #===============================================:===============================
- Run This Layer ?       (0:Yes,       1:No     ):     1
+ Run This Layer ?       (0:Yes,       1:No     ):     0
  Coordinate           (0:spherical, 1:cartesian):     0
- Governing Eqn.       (0:linear,    1:nonlinear):     1
+ Governing Eqn.       (0:linear,    1:nonlinear):     0
  Bottom Friction Switch? (0:Yes,1:No,2:var. n ) :     1
  Manning's Roughness Coef. (For fric.option=0)  :     0.013
  Layer Ouput Option? (0:Z+Hu+Hv;1:Z Only;2:NONE):     0
- GridSize Ratio of Parent layer to current layer:     2
+ GridSize Ratio of Parent layer to current layer:     4
  X_start                                        :   125.0
  X_end                                          :   150.0
  Y_start                                        :   30.0
  Y_end                                          :   50.0
- FileName of Water depth data                   :   jj.xyz
+ FileName of Water depth data                   :../etopo_halk2.xyz
  Data Format Option (0-OLD;1-MOST;2-XYZ;3-ETOPO):     3
  Grid Identification Number                     :    02
  Grid Level                                     :     2
@@ -105,38 +105,38 @@
 #===============================================:===============================
 #  Parameters for Sub-level grid -- layer 03    :Values                        |
 #===============================================:===============================
- Run This Layer ?       (0:Yes,       1:No     ):     1
+ Run This Layer ?       (0:Yes,       1:No     ):     0
  Coordinate           (0:spherical, 1:cartesian):     0
- Governing Eqn.       (0:linear,    1:nonlinear):     1
- Bottom Friction Switch? (0:Yes,1:No,2:var. n ) :     0
+ Governing Eqn.       (0:linear,    1:nonlinear):     0
+ Bottom Friction Switch? (0:Yes,1:No,2:var. n ) :     1
  Manning's Roughness Coef. (For fric.option=0)  :     0.013
  Layer Ouput Option? (0:Z+Hu+Hv;1:Z Only;2:NONE):     1
- GridSize Ratio of Parent layer to current layer:     4
+ GridSize Ratio of Parent layer to current layer:     8
  X_start                                        :  119.9
  X_end                                          :  122.1
  Y_start                                        :   21.8
  Y_end                                          :   25.4
- FileName of Water depth data                   : 0125.xyz
+ FileName of Water depth data                   :../etopo_halk2.xyz
  Data Format Option (0-OLD;1-MOST;2-XYZ;3-ETOPO):     3
  Grid Identification Number                     :    03
  Grid Level                                     :     3
- Parent Grid's ID Number                        :    02
+ Parent Grid's ID Number                        :    01
 
 #===============================================:===============================
 #  Parameters for Sub-level grid -- layer 04    :Values                        |
 #===============================================:===============================
  Run This Layer ?       (0:Yes,       1:No     ):     1
  Coordinate           (0:spherical, 1:cartesian):     0
- Governing Eqn.       (0:linear,    1:nonlinear):     1
- Bottom Friction Switch? (0:Yes,1:No,2:var. n ) :     0
+ Governing Eqn.       (0:linear,    1:nonlinear):     0
+ Bottom Friction Switch? (0:Yes,1:No,2:var. n ) :     1
  Manning's Roughness Coef. (For fric.option=0)  :     0.013
  Layer Ouput Option? (0:Z+Hu+Hv;1:Z Only;2:NONE):     1
  GridSize Ratio of Parent layer to current layer:     16
- X_start                                        :   120.6354616225919
- X_end                                          :   120.9234496509648
- Y_start                                        :    21.84426599282262
- Y_end                                          :    22.21347088069079
- FileName of Water depth data                   :  4_1.xyz
+ X_start                                        :   140.5
+ X_end                                          :   142.25
+ Y_start                                        :    37.8
+ Y_end                                          :    40.0
+ FileName of Water depth data                   :../etopo_halk2.xyz
  Data Format Option (0-OLD;1-MOST;2-XYZ;3-ETOPO):     3
  Grid Identification Number                     :    04
  Grid Level                                     :     3
@@ -147,8 +147,8 @@
 #===============================================:===============================
  Run This Layer ?       (0:Yes,       1:No     ):     1
  Coordinate           (0:spherical, 1:cartesian):     0
- Governing Eqn.       (0:linear,    1:nonlinear):     1
- Bottom Friction Switch? (0:Yes,1:No,2:var. n ) :     0
+ Governing Eqn.       (0:linear,    1:nonlinear):     0
+ Bottom Friction Switch? (0:Yes,1:No,2:var. n ) :     1
  Manning's Roughness Coef. (For fric.option=0)  :     0.013
  Layer Ouput Option? (0:Z+Hu+Hv;1:Z Only;2:NONE):     1
  GridSize Ratio of Parent layer to current layer:     16
@@ -156,11 +156,11 @@
  X_end                                          :   120.723621321133
  Y_start                                        :    22.1896412622199
  Y_end                                          :    22.53257020096585
- FileName of Water depth data                   :  4_2.xyz
+ FileName of Water depth data                   :../etopo_halk2.xyz
  Data Format Option (0-OLD;1-MOST;2-XYZ;3-ETOPO):     3
  Grid Identification Number                     :    05
  Grid Level                                     :     3
- Parent Grid's ID Number                        :    02
+ Parent Grid's ID Number                        :    03
 
 #===============================================:===============================
 #  Parameters for Sub-level grid -- layer 06    :Values                        |
@@ -176,11 +176,11 @@
  X_end                                          :   120.5120381818606
  Y_start                                        :    22.42373978748143
  Y_end                                          :    24.24865827343963
- FileName of Water depth data                   :  4_3.xyz
+ FileName of Water depth data                   :../etopo_halk2.xyz
  Data Format Option (0-OLD;1-MOST;2-XYZ;3-ETOPO):     3
  Grid Identification Number                     :    06
  Grid Level                                     :     3
- Parent Grid's ID Number                        :    02
+ Parent Grid's ID Number                        :    03
 
 #===============================================:===============================
 #  Parameters for Sub-level grid -- layer 07    :Values                        |
@@ -196,11 +196,11 @@
  X_end                                          :   120.9175729323763
  Y_start                                        :    24.15490301533408
  Y_end                                          :    24.80244805853942
- FileName of Water depth data                   :  4_4.xyz
+ FileName of Water depth data                   :../etopo_halk2.xyz
  Data Format Option (0-OLD;1-MOST;2-XYZ;3-ETOPO):     3
  Grid Identification Number                     :    07
  Grid Level                                     :     3
- Parent Grid's ID Number                        :    02
+ Parent Grid's ID Number                        :    03
 
 #===============================================:===============================
 #  Parameters for Sub-level grid -- layer 08    :Values                        |
@@ -216,11 +216,11 @@
  X_end                                          :   121.3231069967601
  Y_start                                        :    24.69987279481362
  Y_end                                          :    25.19808824930069
- FileName of Water depth data                   :  4_5.xyz
+ FileName of Water depth data                   :../etopo_halk2.xyz
  Data Format Option (0-OLD;1-MOST;2-XYZ;3-ETOPO):     3
  Grid Identification Number                     :    08
  Grid Level                                     :     3
- Parent Grid's ID Number                        :    02
+ Parent Grid's ID Number                        :    03
 
 #===============================================:===============================
 #  Parameters for Sub-level grid -- layer 09    :Values                        |

@@ -2,6 +2,7 @@
 #include "GPUConfig.h"
 
 // global variables-----------------------------
+struct GPU_Layer *Root_Grid;
 struct GPU_Layer Layer_struct[MAX_LAYERS];
 uint32_t all_size[MAX_LAYERS][4];
 __constant__ __device__ uint32_t all_size_dev[MAX_LAYERS][4];
@@ -122,6 +123,41 @@ extern "C" void cuda_update_layer_(int *lid) {
     L->Zdat_hst = tmp;
 }
 
+void Ltree_insert_sibling(struct GPU_Layer **insert, struct GPU_Layer *l)
+{
+    
+    while (*insert) {
+        insert = &((*insert)->sibling);
+    }
+    
+    *insert = l;
+    return;
+}
+
+void gcomcot_insert_grid(struct GPU_Layer *l)
+{
+    struct GPU_Layer *parent;
+    
+    if (l->plid == -1) {
+        Root_Grid = l;
+        return;
+    }
+    else if (!Root_Grid) {
+        printf("Error, Root grid is not initialized\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    parent = ldlayer(l->plid);
+    if (parent->child) {
+        Ltree_insert_sibling(&parent->child->sibling, l);
+    }
+    else {
+        parent->child = l;
+    }
+    
+    return;
+}
+
 extern "C" void gcomcot_init_gpu_(void)
 {
     cudaCHK( cudaGetDeviceProperties(&dev_prop, 0) );
@@ -138,11 +174,15 @@ extern "C" void gcomcot_init_gpu_(void)
     for (size_t i = 0; i < NUMSTREAM; i++) {
         cudaCHK( cudaStreamCreate(EXECstream+i) );
     }
+    
+    Root_Grid = NULL;
+    
 }
 
 
 extern "C" void gcomcot_init_layer_(int *layerid, int *parent, int *level,
-                                
+                                int *rel_size, int *rel_time,
+                                int *corners,
                                 float *R1_f, float *R2_f,
                                 float *R3_f, float *R4_f, float *R5_f, 
                                 float *R6_f, float *R11_f, float *H_f, 
@@ -163,11 +203,18 @@ extern "C" void gcomcot_init_layer_(int *layerid, int *parent, int *level,
     L->lid = *layerid;
     L->plid = *parent;
     L->lvl = *level;
+    L->child = NULL;
+    L->sibling = NULL;
+    L->rel_size = *rel_size;
+    L->rel_time = *rel_time;
+    memcpy(L->corner, corners, 4*sizeof(int));
+    
+    gcomcot_insert_grid(L);
     
     cuda_alloc_layer(L, R1_f, R2_f, R3_f, R4_f, R5_f,
                      R6_f, R11_f, H_f, Z_f, row, col);
     
-    
+    return;
 }
 
 extern "C" void cuda_shutdown_(void){

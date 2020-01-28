@@ -4,19 +4,24 @@
 #####################################################################
 
 ### Plese specify your fortran, cuda compiler and GPU's compute capabilities #####
-FC          = gfortran
+FC          = gfortran -g
 FC_FLAGS    = -O2
 
 
-NVCC        = nvcc
+NVCC        = nvcc -g
 NVFLAGS     =
 NVCC_OPT    = -arch=sm_61 -lineinfo
 NVLIB       = -L/usr/local/cuda-9.2/lib64
 ##################################################################################
 
 
-NV_OBJECTS  = GPUcomcot.o GPUMass_s.o GPUMoment_s.o\
-              GPUOpen_BD.o GPUOutput.o
+NV_OBJECTS  = GPUcomcot.o\
+              GPUall_grids.o\
+              GPUMass_s.o\
+              GPUMoment_s.o\
+              GPUOpen_BD.o\
+              GPUOutput.o
+
 NV_DEVOBJ   = nvobj.o
 
 
@@ -75,6 +80,10 @@ GPUOpen_BD.o: GPUOpen_BD.cu
 
 GPUOutput.o: GPUOutput.cu
 	$(NVCC) -c -rdc=true $(NVCC_OPT) $(NVFLAGS) GPUOutput.cu
+	
+GPUall_grids.o: GPUall_grids.cu
+	$(NVCC) -c -rdc=true $(NVCC_OPT) $(NVFLAGS) GPUall_grids.cu
+
 #######################################################################
 
 ################# RULES FOR FORTRAN #################

@@ -51,6 +51,9 @@ struct GPU_Layer {
     int lid;
     int plid;
     int lvl;
+    int rel_size;
+    int rel_time;
+    int corner[4];
     float *Zdat_hst, *MNdat_hst;
     float *Zout_hst, *MNout_hst;
     float *R24_hst, *R35_hst, *H_hst;
@@ -64,8 +67,13 @@ struct GPU_Layer {
     dim3 DimGridOpenBD_LR;
     dim3 DimGridOpenBD_TB;
     size_t GridMaxAmp;
+    struct GPU_Layer *child;
+    struct GPU_Layer *sibling;
 };
 extern struct GPU_Layer Layer_struct[MAX_LAYERS];
+
+extern struct GPU_Layer *Root_Grid;
+
 static inline struct GPU_Layer* ldlayer(int lid){
     if (lid >= MAX_LAYERS || lid < 0) {
         printf("invalid layer id %d\n", lid);
@@ -73,6 +81,10 @@ static inline struct GPU_Layer* ldlayer(int lid){
     }
     return Layer_struct + lid;
 }
+
+extern "C" void mass_launch_(const float* Z_f, float* Z_f_complete, const float *H_f, const int *lid);
+extern "C" void momt_launch_(float*,float*,float*, const int*);
+extern "C" void cuda_update_layer_(int *lid);
 
 #ifndef CUDA_GLOB_VAR
     extern __constant__ __device__ uint32_t all_size_dev[MAX_LAYERS][4];

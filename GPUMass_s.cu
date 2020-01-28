@@ -1,7 +1,6 @@
 #include "GPUHeader.h"
 #include "GPUConfig.h"
 
-extern "C" void mass_launch_(const float*, float*, const float*, const int*);
 __global__ void mass_kernel(struct GPU_Layer);
 
 

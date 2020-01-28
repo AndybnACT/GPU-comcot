@@ -1,13 +1,12 @@
 #include "GPUHeader.h"
 #include "GPUConfig.h"
 
-extern "C" void momt_launch_(float*,float*,float*, int*);
 __global__ void momts_kernel(const float* __restrict__,const float* __restrict__,
                     const float* __restrict__,const float* __restrict__,const float* __restrict__);
 __global__ void momt_kernelM(struct GPU_Layer L);
 __global__ void momt_kernelN(struct GPU_Layer L);
 
-extern "C" void momt_launch_(float *M_f, float *N_f, float *Z_f, int *lid) {
+extern "C" void momt_launch_(float *M_f, float *N_f, float *Z_f, const int *lid) {
     float* tmp;
     clock_t st, fi;
     cudaError_t err;
