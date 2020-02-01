@@ -66,6 +66,7 @@ struct GPU_Layer {
     dim3 DimGridMass;
     dim3 DimGridOpenBD_LR;
     dim3 DimGridOpenBD_TB;
+    dim3 DimGrid_JNQ;
     size_t GridMaxAmp;
     struct GPU_Layer *child;
     struct GPU_Layer *sibling;
