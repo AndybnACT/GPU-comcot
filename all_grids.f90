@@ -1,4 +1,5 @@
 
+#include "debug_option.h"
 !----------------------------------------------------------------------
       SUBROUTINE ALL_GRID (LO,LA)
 !DESCRIPTION:
@@ -407,6 +408,20 @@
       RETURN
       END
 
+
+      SUBROUTINE GET_ALL(LL)
+      USE LAYER_PARAMS
+      TYPE (LAYER)		:: LL
+      
+      
+      CALL CUDA_GETZ1(LL%Z(:,:,1), LL%ID)
+      CALL CUDA_GETZ(LL%Z(:,:,2), LL%ID)
+      CALL CUDA_GETMN1(LL%M(:,:,1), LL%N(:,:,1), LL%ID)
+      CALL CUDA_GETMN(LL%M(:,:,2), LL%N(:,:,2), LL%ID)
+      
+      
+      RETURN
+      END
       
 !-----------------------------------------------------------------------
       SUBROUTINE JNQ (LO,LA)
@@ -427,6 +442,11 @@
       USE LAYER_PARAMS
       TYPE (LAYER)		:: LO, LA
 
+#ifdef DEBUG_ALL_GRID
+    CALL GET_ALL(LO)
+    CALL GET_ALL(LA)
+#endif /* DEBUG_ALL_GRID */
+
 	  IF (LA%SC_OPTION.EQ.0) THEN
 	  IS = LA%CORNERS(1)
       IE = LA%CORNERS(2)
@@ -434,6 +454,11 @@
       JE = LA%CORNERS(4)
       CALL EDGEINTERP_VERT (LO%M(IS-1,:,1),LO%NY,LA,0) !LEFT BOUNDARY
 	  CALL EDGEINTERP_VERT (LO%M(IE,:,1),LO%NY,LA,1)   !RIGHT BOUNDARY
+      
+#ifdef DEBUG_ALL_GRID
+      CALL edgeinterp_dbglaunch(LO%M(:,:,1), LO%N(:,:,1), LO%ID, LA%M(:,:,1), LA%N(:,:,1), LA%ID)
+#endif /* DEBUG_ALL_GRID */
+      
 	  CALL EDGEINTERP_HORI (LO%N(:,JS-1,1),LO%NX,LA,0) !BOTTOM BOUNDARY
 	  CALL EDGEINTERP_HORI (LO%N(:,JE,1),LO%NX,LA,1)   !TOP BOUNDARY
 	  ELSE

@@ -140,6 +140,9 @@
 !* DZ(:,:,2) - TOTAL WATER DEPTH (USED FOR DETERMINING MOVING BOUNDARY)
 !* FILE IO-UNIT 23, 25, 666, 999, and 1001-9999 RESERVED.
 !**********************************************************************
+#include "debug_option.h"
+
+
 
 !----------------------------------------------------------------------
       PROGRAM COMCOT
@@ -177,6 +180,14 @@
 	  ALLOCATE(LA(NUM_GRID))
 	  ALLOCATE(FAULT_INFO(NUM_FLT))
 !----------------------------------------------------------------------
+
+#ifdef DEBUG_CORE
+    write(*,*) "DEBUG_CORE [ENABLED]"
+#endif
+#ifdef DEBUG_ALL_GRID
+    write(*,*) "DEBUG_ALL_GRID [ENABLED]"
+#endif
+
       write (*,*) '  '
       write (*,*) '************** GPU-COMCOT ******************'
       write (*,*) '*                                          *'
@@ -344,12 +355,14 @@
 		    CALL SED_TRANSPORT (LO)
 		 ENDIF
 
-         ! WRITE(*,*) "COMPUTING MASS EQ ON CPU"
-         ! call system_clock ( t1, trate, tmax )
-		 ! CALL MASS (LO)
-         ! call system_clock ( t2, trate, tmax )
-         ! write ( *, * ) 'Serial Code Elapsed real time = ', real ( t2 - t1 ) / real ( trate )
-         ! WRITE (*,*) "COMPUTING MASS EQ ON GPU"
+#ifdef DEBUG_CORE
+         WRITE(*,*) "COMPUTING MASS EQ ON CPU"
+         call system_clock ( t1, trate, tmax )
+		 CALL MASS (LO)
+         call system_clock ( t2, trate, tmax )
+         write ( *, * ) 'Serial Code Elapsed real time = ', real ( t2 - t1 ) / real ( trate )
+         WRITE (*,*) "COMPUTING MASS EQ ON GPU"
+#endif /* DEBUG_CORE */
          CALL MASS_LAUNCH(LO%Z(:,:,1),LO%Z(:,:,2),LO%H(:,:), LO%ID)
 
 !.......SOLVE RADIATION OPEN BOUNDARY
@@ -380,13 +393,14 @@
 !//////////////////////////////////////////////////////////////////////
 !        SOLVE MOMENTUM CONSERVATION EQN FOR LAYER 1
 !//////////////////////////////////////////////////////////////////////
-         ! WRITE(*,*) "COMPUTING MOMT EQ ON CPU"
-         ! call system_clock ( t1, trate, tmax )
-         ! CALL MOMENT (LO)
-         ! call system_clock ( t2, trate, tmax )
-         ! write ( *, * ) 'Serial Code Elapsed real time = ', real ( t2 - t1 ) / real ( trate )
-         !
-         ! WRITE(*,*) "COMPUTING MOMT EQ ON GPU"
+#ifdef DEBUG_CORE
+         WRITE(*,*) "COMPUTING MOMT EQ ON CPU"
+         call system_clock ( t1, trate, tmax )
+         CALL MOMENT (LO)
+         call system_clock ( t2, trate, tmax )
+         write ( *, * ) 'Serial Code Elapsed real time = ', real ( t2 - t1 ) / real ( trate )
+         WRITE(*,*) "COMPUTING MOMT EQ ON GPU"
+#endif /* DEBUG_CORE */
          CALL MOMT_LAUNCH(LO%M(:,:,2), LO%N(:,:,2), LO%Z(:,:,2), LO%ID)
 
 !.......USE SPONGE LAYER .....
@@ -468,31 +482,33 @@
 !      X, Y DIRECTIONS)FROM LAST STEP TO NEXT STEP (FOR OUTEST LAYER)
 !----------------------------------------------------------------------
 !!!!!!!!!!!!!!!!!!!!      COMMEMT ADDED BY TAO     !!!!!!!!!!!!!!!!!!!!!!!!!!
-!     USE LAYER_PARAMS
-!     TYPE (LAYER)	:: LO
-!       IF (LO%LAYGOV .GT. 1) THEN
-!           LO%M0(:,:)   = LO%M(:,:,1)
-!           LO%N0(:,:) = LO%N(:,:,1)
-!       ENDIF
-!       LO%Z(:,:,1) = LO%Z(:,:,2)
-!       LO%M(:,:,1) = LO%M(:,:,2)
-!       LO%N(:,:,1) = LO%N(:,:,2)
-!       ! DO J=1,LO%NY
-!       !    DO I=1,LO%NX
-!       !       LO%Z(I,J,1) = LO%Z(I,J,2)
-!       !       LO%M(I,J,1) = LO%M(I,J,2)
-!       !       LO%N(I,J,1) = LO%N(I,J,2)
-! 		! 	IF (LO%LAYGOV.GT.1) THEN
-! 		!        LO%M0(I,J)  = LO%M(I,J,1)
-! 		!        LO%N0(I,J)  = LO%N(I,J,1)
-! 		! 	ENDIF
-!       !    END DO
-!       ! END DO
-! !.....UPDATE BATHYMETRY IF TRANSIENT SEAFLOOR MOTION IS ENABLED
-! 	  IF (LO%INI_SWITCH.EQ.3 .OR. LO%INI_SWITCH.EQ.4) THEN
-! 	     LO%HT(:,:,1) = LO%HT(:,:,2)
-! 	     LO%H(:,:) = LO%H(:,:) + LO%HT(:,:,2) - LO%HT(:,:,1)
-! 	  ENDIF
+#ifdef DEBUG_CORE
+    USE LAYER_PARAMS
+    TYPE (LAYER)	:: LO
+      IF (LO%LAYGOV .GT. 1) THEN
+          LO%M0(:,:)   = LO%M(:,:,1)
+          LO%N0(:,:) = LO%N(:,:,1)
+      ENDIF
+      LO%Z(:,:,1) = LO%Z(:,:,2)
+      LO%M(:,:,1) = LO%M(:,:,2)
+      LO%N(:,:,1) = LO%N(:,:,2)
+      ! DO J=1,LO%NY
+      !    DO I=1,LO%NX
+      !       LO%Z(I,J,1) = LO%Z(I,J,2)
+      !       LO%M(I,J,1) = LO%M(I,J,2)
+      !       LO%N(I,J,1) = LO%N(I,J,2)
+		! 	IF (LO%LAYGOV.GT.1) THEN
+		!        LO%M0(I,J)  = LO%M(I,J,1)
+		!        LO%N0(I,J)  = LO%N(I,J,1)
+		! 	ENDIF
+      !    END DO
+      ! END DO
+!.....UPDATE BATHYMETRY IF TRANSIENT SEAFLOOR MOTION IS ENABLED
+	  IF (LO%INI_SWITCH.EQ.3 .OR. LO%INI_SWITCH.EQ.4) THEN
+	     LO%HT(:,:,1) = LO%HT(:,:,2)
+	     LO%H(:,:) = LO%H(:,:) + LO%HT(:,:,2) - LO%HT(:,:,1)
+	  ENDIF
+#endif /* DEBUG_CORE */
 !!!!!!!!!!!!!!!!!!!!      COMMEMT ADDED BY TAO     !!!!!!!!!!!!!!!!!!!!!!!!!!
 
       CALL CUDA_UPDATE_LAYER(1)

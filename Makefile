@@ -4,7 +4,7 @@
 #####################################################################
 
 ### Plese specify your fortran, cuda compiler and GPU's compute capabilities #####
-FC          = gfortran -g
+FC          = gfortran -g -cpp
 FC_FLAGS    = -O2
 
 
