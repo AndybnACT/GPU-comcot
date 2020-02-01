@@ -37,10 +37,20 @@ __global__ void maximum_recorder_kernel(float *max_array, const float* __restric
     }
 }
 
+extern "C" void cuda_getz1_(float *Z_f, int *lid) {
+    struct GPU_Layer *L = ldlayer(*lid);
+    cudaCHK( cudaMemcpy(Z_f, L->Zdat_hst, L->l_size[3], cudaMemcpyDeviceToHost) );
+}
 
 extern "C" void cuda_getz_(float *Z_f, int *lid) {
     struct GPU_Layer *L = ldlayer(*lid);
     cudaCHK( cudaMemcpy(Z_f, L->Zout_hst, L->l_size[3], cudaMemcpyDeviceToHost) );
+}
+
+extern "C" void cuda_getmn1_(float *M_f, float *N_f, int *lid) {
+    struct GPU_Layer *L = ldlayer(*lid);
+    cudaCHK( cudaMemcpy(M_f, L->MNdat_hst, L->l_size[3], cudaMemcpyDeviceToHost) );
+    cudaCHK( cudaMemcpy(N_f, L->MNdat_hst+L->l_size[2], L->l_size[3], cudaMemcpyDeviceToHost) );
 }
 
 extern "C" void cuda_getmn_(float *M_f, float *N_f, int *lid) {
