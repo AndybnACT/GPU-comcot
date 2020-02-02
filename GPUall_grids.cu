@@ -72,6 +72,7 @@ __global__ void edgeinterp_vert(const float* __restrict__ outer, int stride,
         
     }
 }
+
 struct edges_indx{
     int left;
     int right;
@@ -130,50 +131,121 @@ __global__ void edgeinterp_vert2(const float* __restrict__ outerbase,
     }
 }
 
-
+__global__ void edgeinterp_hori2(const float* __restrict__ outerbase, 
+                                 struct edges_indx index, 
+                                 struct GPU_Layer innerL)
+{
+    const float* __restrict__ edges[2] = {outerbase + index.left, 
+                                          outerbase + index.right};
+    const uint32_t* __restrict__ size_dev = all_size_dev[innerL.lid];
+    const int inner_col[2] = {0, size_dev[1]-1};
+    const int rowid = threadIdx.x%32 + 30*(threadIdx.x>>5) + blockIdx.x*30*(blockDim.x>>5) - 1;
+    int row = rowid;
+    int row_end = innerL.corner[1];
+    const int ir = innerL.rel_size;
+    
+    row += innerL.corner[0] - 1;
+    
+    float flux;
+    float flux_s, flux_e, c1[2], c2[2], nn;
+    
+    nn = 2.0 * (float) ir;
+    
+#pragma unroll 2
+    for (size_t i = 0; i < 2; i++) {
+        const float * __restrict__ outer = edges[i];
+        flux = outer[row];
+        flux_e = __shfl_down_sync(0xFFFFFFFF, flux, 1);
+        flux_s = __shfl_up_sync(0xFFFFFFFF, flux, 1);
+        flux_e = 0.5*(flux_e + flux);
+        flux_s = 0.5*(flux_s + flux);
+        c1[i] = (flux_e-flux_s)/nn;
+        c2[i] = -c1[i] + flux_s;
+    }
+    
+    if (threadIdx.x%32 == 0 || threadIdx.x%32 == 31) {
+        return;
+    }
+    
+    if (row < row_end) {
+#pragma unroll 2
+        for (size_t i = 0; i < 2; i++) {
+            int inner_row = rowid*ir + 1;
+            for (size_t j = 0; j < ir; j++) {
+                innerL.MNdat_hst[ID2E(inner_row, inner_col[i], 1)] = 
+                    2.0*((float)(j+1))*c1[i] + c2[i];
+                if (innerL.H_hst[ID(inner_row, inner_col[i])] + 
+                    innerL.Zdat_hst[ID(inner_row, inner_col[i])] <= GX)
+                        innerL.MNdat_hst[ID2E(inner_row, inner_col[i], 1)] = 0.0;
+                inner_row++;
+            }
+        }
+    }    
+}
 
 extern "C" void edgeinterp_dbglaunch_(float *mO, float *nO, int *idO, 
                                       float *mA, float *nA, int *idA)
 {
     struct GPU_Layer *lO = ldlayer(*idO);
     struct GPU_Layer *lA = ldlayer(*idA);
-    struct edges_indx MO_vert;
-    float *m_cmp;
+    struct edges_indx MO_vert, NO_hori;
+    float *mn_cmp;
     cudaError_t err;
 
     // edgeinterp_vert <<< lA->DimGrid_JNQ, BLOCKX_JNQ >>> 
     //             (lO->MNdat_hst + lA->corner[0] - 1 - 1, lO->l_size[0], *lA);
     MO_vert.left  = lA->corner[0] - 1 - 1;
     MO_vert.right = lA->corner[1] - 1;
-    edgeinterp_vert2 <<< lA->DimGrid_JNQ, BLOCKX_JNQ >>> 
+    edgeinterp_vert2 <<< lA->DimGrid_JNQV, BLOCKX_JNQ, 0, EXECstream[0] >>> 
                     (lO->MNdat_hst, MO_vert, lO->l_size[0], *lA);
+    
+    NO_hori.left  = (lA->corner[2] - 1 - 1)*lO->l_size[0];
+    NO_hori.right = (lA->corner[3] - 1)*lO->l_size[0];
+    edgeinterp_hori2 <<< lA->DimGrid_JNQH, BLOCKX_JNQ, 0, EXECstream[1] >>>
+                    (lO->MNdat_hst+lO->l_size[2], NO_hori, *lA);
+    
     cudaDeviceSynchronize();
     err = cudaGetLastError();
     cudaERROR(err);
     
-    m_cmp = (float*) malloc(lA->l_size[3]);
-    cudaCHK( cudaMemcpy(m_cmp, lA->MNdat_hst, lA->l_size[3], cudaMemcpyDeviceToHost) );
+    mn_cmp = (float*) malloc(2*lA->l_size[3]);
+    cudaCHK( cudaMemcpy(mn_cmp, lA->MNdat_hst, 2*lA->l_size[3], cudaMemcpyDeviceToHost) );
     
     printf("==============lO:%d, lA:%d =============\n", lO->lid, lA->lid);
     for (size_t i = 0; i < lA->l_size[1]; i++) {
         int id = i*lA->l_size[0] + 0;
-        if (fabs(m_cmp[id] - mA[id]) >= 1.0e-6) {
-            printf("(left) i = %d, %f, %f, diff=%f\n", i, m_cmp[id], mA[id], fabs(m_cmp[id] - mA[id]));
+        if (fabs(mn_cmp[id] - mA[id]) >= 1.0e-6) {
+            printf("(left) i = %d, %f, %f, diff=%f\n", i, mn_cmp[id], mA[id], fabs(mn_cmp[id] - mA[id]));
         }
     }
     for (size_t i = 0; i < lA->l_size[1]; i++) {
         int id = i*lA->l_size[0] + lA->l_size[1] - 1;
-        // if (m_cmp[id] != 0.0) {
-        //     printf("(right !=0, i = %d, %f)\n", i, m_cmp[id]);
+        // if (mn_cmp[id] != 0.0) {
+        //     printf("(right !=0, i = %d, %f)\n", i, mn_cmp[id]);
         // }
-        if (fabs(m_cmp[id] - mA[id]) >= 1.0e-6) {
-            printf("(right) i = %d, %f, %f, diff=%f\n", i, m_cmp[id], mA[id], fabs(m_cmp[id] - mA[id]));
+        if (fabs(mn_cmp[id] - mA[id]) >= 1.0e-6) {
+            printf("(right) i = %d, %f, %f, diff=%f\n", i, mn_cmp[id], mA[id], fabs(mn_cmp[id] - mA[id]));
         }
     }
     
-    free(m_cmp);
+    for (size_t i = 0; i < lA->l_size[0]; i++) {
+        int id = i;
+        if (fabs(mn_cmp[id + lA->l_size[2]] - nA[id]) >= 1.0e-6) {
+            printf("(bottom) i = %d, %f, %f, diff=%f\n", i, mn_cmp[id + lA->l_size[2]], 
+                    nA[id], fabs(mn_cmp[id + lA->l_size[2]] - nA[id]));
+        }
+    }
+    
+    for (size_t i = 0; i < lA->l_size[0]; i++) {
+        int id = i + lA->l_size[0]*(lA->l_size[1] - 1);
+        if (fabs(mn_cmp[id + lA->l_size[2]] - nA[id]) >= 1.0e-6) {
+            printf("(top) i = %d, %f, %f, diff=%f\n", i, mn_cmp[id + lA->l_size[2]], 
+                    nA[id], fabs(mn_cmp[id + lA->l_size[2]] - nA[id]));
+        }
+    }
+    
+    free(mn_cmp);
 }
-
 
 void jnq(struct GPU_Layer *parent, struct GPU_Layer *child)
 {
@@ -188,7 +260,8 @@ void newq(struct GPU_Layer *parent, struct GPU_Layer *child, int step)
     return;
 }
 
-void jnz(struct GPU_Layer *parent, struct GPU_Layer *child) {
+void jnz(struct GPU_Layer *parent, struct GPU_Layer *child) 
+{
     
     return;
 }

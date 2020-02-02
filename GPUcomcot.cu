@@ -101,7 +101,8 @@ extern "C" void cuda_alloc_layer(struct GPU_Layer *L, float *R1_f, float *R2_f,
     L->DimGridOpenBD_TB = dim3((L->l_size[1]-1)/(31*(BLOCKX_OPENBD>>5)) + 1, 1, 1);
     L->GridMaxAmp       = (L->l_size[2]-1)/MAXAMP_BLOCK + 1;
     if (L->lid != 1) {
-        L->DimGrid_JNQ  = dim3((L->corner[3] - L->corner[2])/(30*BLOCKX_JNQ>>5) + 1, 1, 1);
+        L->DimGrid_JNQV  = dim3((L->corner[3] - L->corner[2])/(30*BLOCKX_JNQ>>5) + 1, 1, 1);
+        L->DimGrid_JNQH  = dim3((L->corner[1] - L->corner[0])/(30*BLOCKX_JNQ>>5) + 1, 1, 1);
     }
 
     #ifdef DEBUG
