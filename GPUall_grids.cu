@@ -78,15 +78,12 @@ struct edges_indx{
     int right;
 };
 
-__global__ void edgeinterp_vert2(const float* __restrict__ outerbase, 
-                                 struct edges_indx index, int stride, 
-                                 struct GPU_Layer innerL)
+__global__ void edgeinterp_vert2(struct GPU_Layer innerL, struct GPU_Layer outerL, int T)
 {
-    const float* __restrict__ edges[2] = {outerbase + index.left, 
-                                          outerbase + index.right};
     const uint32_t* __restrict__ size_dev = all_size_dev[innerL.lid];
+    const int outer_row[2] = {innerL.corner[0] - 1 - 1,
+                              innerL.corner[1] - 1};
     const int inner_row[2] = {0, size_dev[0]-1};
-    // int row_r = size_dev[0] - 1;
     const int colid = threadIdx.x%32 + 30*(threadIdx.x>>5) + blockIdx.x*30*(blockDim.x>>5) - 1;
     int col = colid;
     int col_end = innerL.corner[3];
@@ -101,8 +98,9 @@ __global__ void edgeinterp_vert2(const float* __restrict__ outerbase,
     
 #pragma unroll 2
     for (size_t i = 0; i < 2; i++) {
-        const float * __restrict__ outer = edges[i];
-        flux = outer[col*stride];
+        if (T == 1) {
+            flux = outerL.MNdat_hst[outer_row[i] + col*outerL.l_size[0]];
+        }
         flux_e = __shfl_down_sync(0xFFFFFFFF, flux, 1);
         flux_s = __shfl_up_sync(0xFFFFFFFF, flux, 1);
         flux_e = 0.5*(flux_e + flux);
@@ -131,12 +129,10 @@ __global__ void edgeinterp_vert2(const float* __restrict__ outerbase,
     }
 }
 
-__global__ void edgeinterp_hori2(const float* __restrict__ outerbase, 
-                                 struct edges_indx index, 
-                                 struct GPU_Layer innerL)
+__global__ void edgeinterp_hori2(struct GPU_Layer innerL, struct GPU_Layer outerL, int T)
 {
-    const float* __restrict__ edges[2] = {outerbase + index.left, 
-                                          outerbase + index.right};
+    const int outer_col[2] = {(innerL.corner[2] - 1 - 1)*outerL.l_size[0],
+                              (innerL.corner[3] - 1)*outerL.l_size[0]};
     const uint32_t* __restrict__ size_dev = all_size_dev[innerL.lid];
     const int inner_col[2] = {0, size_dev[1]-1};
     const int rowid = threadIdx.x%32 + 30*(threadIdx.x>>5) + blockIdx.x*30*(blockDim.x>>5) - 1;
@@ -153,8 +149,9 @@ __global__ void edgeinterp_hori2(const float* __restrict__ outerbase,
     
 #pragma unroll 2
     for (size_t i = 0; i < 2; i++) {
-        const float * __restrict__ outer = edges[i];
-        flux = outer[row];
+        if (T == 1) {
+            flux = outerL.MNdat_hst[outerL.l_size[2] + outer_col[i] + row];
+        }
         flux_e = __shfl_down_sync(0xFFFFFFFF, flux, 1);
         flux_s = __shfl_up_sync(0xFFFFFFFF, flux, 1);
         flux_e = 0.5*(flux_e + flux);
@@ -197,12 +194,12 @@ extern "C" void edgeinterp_dbglaunch_(float *mO, float *nO, int *idO,
     MO_vert.left  = lA->corner[0] - 1 - 1;
     MO_vert.right = lA->corner[1] - 1;
     edgeinterp_vert2 <<< lA->DimGrid_JNQV, BLOCKX_JNQ, 0, EXECstream[0] >>> 
-                    (lO->MNdat_hst, MO_vert, lO->l_size[0], *lA);
+                    (*lA, *lO, 1);
     
     NO_hori.left  = (lA->corner[2] - 1 - 1)*lO->l_size[0];
     NO_hori.right = (lA->corner[3] - 1)*lO->l_size[0];
     edgeinterp_hori2 <<< lA->DimGrid_JNQH, BLOCKX_JNQ, 0, EXECstream[1] >>>
-                    (lO->MNdat_hst+lO->l_size[2], NO_hori, *lA);
+                    (*lA, *lO, 1);
     
     cudaDeviceSynchronize();
     err = cudaGetLastError();
@@ -219,10 +216,7 @@ extern "C" void edgeinterp_dbglaunch_(float *mO, float *nO, int *idO,
         }
     }
     for (size_t i = 0; i < lA->l_size[1]; i++) {
-        int id = i*lA->l_size[0] + lA->l_size[1] - 1;
-        // if (mn_cmp[id] != 0.0) {
-        //     printf("(right !=0, i = %d, %f)\n", i, mn_cmp[id]);
-        // }
+        int id = i*lA->l_size[0] + lA->l_size[0] - 1;
         if (fabs(mn_cmp[id] - mA[id]) >= 1.0e-6) {
             printf("(right) i = %d, %f, %f, diff=%f\n", i, mn_cmp[id], mA[id], fabs(mn_cmp[id] - mA[id]));
         }
