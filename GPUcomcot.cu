@@ -186,7 +186,7 @@ extern "C" void gcomcot_init_gpu_(void)
 
 extern "C" void gcomcot_init_layer_(int *layerid, int *parent, int *level,
                                 int *rel_size, int *rel_time,
-                                int *corners,
+                                int *corners, float *grx, float *gry,
                                 float *R1_f, float *R2_f,
                                 float *R3_f, float *R4_f, float *R5_f, 
                                 float *R6_f, float *R11_f, float *H_f, 
@@ -211,6 +211,8 @@ extern "C" void gcomcot_init_layer_(int *layerid, int *parent, int *level,
     L->sibling = NULL;
     L->rel_size = *rel_size;
     L->rel_time = *rel_time;
+    L->grx = *grx;
+    L->gry = *gry;
     memcpy(L->corner, corners, 4*sizeof(int));
     
     gcomcot_insert_grid(L);

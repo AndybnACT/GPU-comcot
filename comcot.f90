@@ -279,7 +279,7 @@
       CALL GCOMCOT_INIT_GPU()
       CALL GCOMCOT_INIT_LAYER(LO%ID, LO%PARENT, LO%LEVEL,           &
                               LO%REL_SIZE, LO%REL_TIME,             &
-                              LO%CORNERS,                           &
+                              LO%CORNERS, LO%GRX, LO%GRY,           &
                               LO%R1, LO%R2, LO%R3, LO%R4, LO%R5,    &
                               LO%R6, LO%R11, LO%H, LO%Z, LO%NX, LO%NY)
                               
@@ -287,7 +287,7 @@
           if ( LA(i)%LAYSWITCH .EQ. 0 ) then
               CALL GCOMCOT_INIT_LAYER(LA(i)%ID, LA(i)%PARENT, LA(i)%LEVEL,      &
                             LA(i)%REL_SIZE, LA(i)%REL_TIME,             &
-                            LA(i)%CORNERS,                           &
+                            LA(i)%CORNERS, LA(i)%GRX, LA(i)%GRY,         &
                             LA(i)%R1, LA(i)%R2, LA(i)%R3, LA(i)%R4, LA(i)%R5,    &
                             LA(i)%R6, LA(i)%R11, LA(i)%H, LA(i)%Z, LA(i)%NX, LA(i)%NY)
           end if

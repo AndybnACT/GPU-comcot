@@ -60,6 +60,8 @@ struct GPU_Layer {
     float *R_MASS_hst;
     float *Zmax_hst;
     uint32_t l_size[4];
+    float grx;
+    float gry;
     
     dim3 DimGridMomt_MN;
     dim3 DimGridMomt;
