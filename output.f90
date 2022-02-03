@@ -1046,6 +1046,7 @@
       TYPE (LAYER) :: LO
 	  TYPE (LAYER), DIMENSION(NUM_GRID)  :: LA
 	  REAL DAT,X0,Y0
+      REAL L1,L2,L3,L4
 	  INTEGER ID,IS,JS,IE,JE,KI,KJ
 	  COMMON /CONS/ ELMAX,GRAV,PI,R_EARTH,GX,EPS,ZERO,ONE,NUM_GRID,	&
 					NUM_FLT,V_LIMIT,RAD_DEG,RAD_MIN
@@ -1081,10 +1082,16 @@
 	     DELTA_Y = LO%Y(KJ+1)-LO%Y(KJ)
 	     CX = (X0-LO%X(KI))/DELTA_X
 	     CY = (Y0-LO%Y(KJ))/DELTA_Y
-         Z1 = LO%Z(KI,KJ,2)*(1.0-CX)*(1.0-CY)
-	     Z2 = LO%Z(KI+1,KJ,2)*(CX)*(1-CY)
-	     Z3 = LO%Z(KI,KJ+1,2)*(1.0-CX)*(CY)
-	     Z4 = LO%Z(KI+1,KJ+1,2)*(CX)*(CY)
+         CALL GCOMCOT_GET_Z(1, L1, L2, L3, L4, KI, KJ)
+         Z1 = L1*(1.0-CX)*(1.0-CY)
+	     Z2 = L2*(CX)*(1-CY)
+	     Z3 = L3*(1.0-CX)*(CY)
+	     Z4 = L4*(CX)*(CY)
+         
+!        Z1 = LO%Z(KI,KJ,2)*(1.0-CX)*(1.0-CY)
+!	     Z2 = LO%Z(KI+1,KJ,2)*(CX)*(1-CY)
+!	     Z3 = LO%Z(KI,KJ+1,2)*(1.0-CX)*(CY)
+!	     Z4 = LO%Z(KI+1,KJ+1,2)*(CX)*(CY)
 	     DAT = Z1+Z2+Z3+Z4
 		 IF (ABS(LO%TIDE_LEVEL).GT.GX) DAT = DAT + LO%TIDE_LEVEL
 	  ELSE
@@ -1130,10 +1137,16 @@
 !	     Z4 = ETAUR*CX*CY
 !	     DAT = Z1+Z2+Z3+Z4
 !
-         Z1 = LA(K)%Z(KI,KJ,2)*(1.0-CX)*(1.0-CY)
-	     Z2 = LA(K)%Z(KI+1,KJ,2)*(CX)*(1-CY)
-	     Z3 = LA(K)%Z(KI,KJ+1,2)*(1.0-CX)*(CY)
-	     Z4 = LA(K)%Z(KI+1,KJ+1,2)*(CX)*(CY)
+         CALL GCOMCOT_GET_Z(LA%ID, L1, L2, L3, L4, KI, KJ)
+         Z1 = L1*(1.0-CX)*(1.0-CY)
+	     Z2 = L2*(CX)*(1-CY)
+	     Z3 = L3*(1.0-CX)*(CY)
+	     Z4 = L4*(CX)*(CY)
+
+!        Z1 = LA(K)%Z(KI,KJ,2)*(1.0-CX)*(1.0-CY)
+!	     Z2 = LA(K)%Z(KI+1,KJ,2)*(CX)*(1-CY)
+!	     Z3 = LA(K)%Z(KI,KJ+1,2)*(1.0-CX)*(CY)
+!	     Z4 = LA(K)%Z(KI+1,KJ+1,2)*(CX)*(CY)
 	     DAT = Z1+Z2+Z3+Z4
 		 IF (ABS(LA(K)%TIDE_LEVEL).GT.GX) DAT = DAT + LA(K)%TIDE_LEVEL
 	  ENDIF

@@ -26,7 +26,22 @@ extern "C" void maxamp_launch_(const int *lid){
     #endif
 }
 
-
+extern "C" void gcomcot_get_z_(int *lid, float *l1, float *l2, 
+                                         float *l3, float *l4,
+                                         int *i, int *j)
+{
+    struct GPU_Layer *L = ldlayer(*lid);
+    float tmp[2];
+    cudaCHK( cudaMemcpy(tmp, L->Zout_hst + L->l_size[0] * (*j - 1) + (*i - 1),
+                         2 * sizeof(float), cudaMemcpyDeviceToHost) );
+    *l1 = tmp[0];
+    *l2 = tmp[1];
+    cudaCHK( cudaMemcpy(tmp, L->Zout_hst + L->l_size[0] * (*j) + (*i - 1),
+                         2 * sizeof(float), cudaMemcpyDeviceToHost) );
+    *l3 = tmp[0];
+    *l4 = tmp[1];
+    return;
+}
 
 __global__ void maximum_recorder_kernel(float *max_array, const float* __restrict__ array, const uint32_t array_size){
     uint32_t id=blockIdx.x*blockDim.x + threadIdx.x;

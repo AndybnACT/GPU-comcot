@@ -308,10 +308,9 @@
 		 CALL ALL_PRT (ISTART-1,LO,LA)
 		 IF (OUT_OPT.EQ.1 .OR. OUT_OPT.EQ.2) THEN
             DO NIC = 1,NUM_REC
-               WRITE(*,*) "[WARNING] THE FUNCTION [GET_TS] IS CURRENTLY NOT SUPPORTED ON GPU COMCOT----->[will be updated soon]"
 		       CALL GET_TS (TS_DAT,TS_LOC(NIC,1),TS_LOC(NIC,2),		&
 												LO,LA,TS_ID(NIC))
-!*			  WRITE(*,*) TS_LOC(NIC,1),TS_LOC(NIC,2),TS_DAT
+                WRITE(*,*) TS_LOC(NIC,1),TS_LOC(NIC,2),TS_DAT
 			   IO_UNIT = 1000+NIC
 		       WRITE(IO_UNIT,'(F10.5)') TS_DAT
             ENDDO
@@ -427,21 +426,20 @@
 		 ENDIF
 
 
+!.......OUTPUT TIME SEQUENCE AND TIME HISTORY RECORDS AT T = K*LO%DT
+          WRITE (99,*) TIME                                                !
+ 		 IF (OUT_OPT.EQ.1 .OR. OUT_OPT.EQ.2) THEN                           !
+             DO NIC = 1,NUM_REC                                            !
+ 		       CALL GET_TS (TS_DAT,TS_LOC(NIC,1),TS_LOC(NIC,2),		&       !
+ 												LO,LA,TS_ID(NIC))           !
+!*			  WRITE(*,*) TS_LOC(NIC,1),TS_LOC(NIC,2),TS_DAT             !
+ 			   IO_UNIT = 1000+NIC                                           !
+ 		       WRITE(IO_UNIT,'(F10.5)') TS_DAT                              !
+             ENDDO                                                         !
+ 		 END IF                                                             !
+
 !.......UPDATE VARIABLES OF LAYER 01 (LO) FOR NEXT TIME STEP
          CALL CHANGE()
-!.......OUTPUT TIME SEQUENCE AND TIME HISTORY RECORDS AT T = K*LO%DT
-!!!!!!!!!!!!!!!!!!!!      COMMEMT ADDED BY TAO     !!!!!!!!!!!!!!!!!!!!!!!!!!
-!          WRITE (99,*) TIME                                                !
-! 		 IF (OUT_OPT.EQ.1 .OR. OUT_OPT.EQ.2) THEN                           !
-!             DO NIC = 1,NUM_REC                                            !
-! 		       CALL GET_TS (TS_DAT,TS_LOC(NIC,1),TS_LOC(NIC,2),		&       !
-! 												LO,LA,TS_ID(NIC))           !
-! !*			  WRITE(*,*) TS_LOC(NIC,1),TS_LOC(NIC,2),TS_DAT             !
-! 			   IO_UNIT = 1000+NIC                                           !
-! 		       WRITE(IO_UNIT,'(F10.5)') TS_DAT                              !
-!             ENDDO                                                         !
-! 		 END IF                                                             !
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        END DO
 
 !..... CLOSE ALL OPENNED DATA FILES
