@@ -23,6 +23,10 @@ extern dim3 DimGridMomt_MN;
 extern dim3 DimBlockMass;
 extern dim3 DimGridMass;
 
+#define BLOCKX_JNZ 64
+#define DEBUG_DEPTH 32
+#define LOOPDEPTH DEBUG_DEPTH
+
 #define BLOCKX_OPENBD 64
 extern dim3 DimBlockOpenBD;
 extern dim3 DimGridOpenBD_LR;

@@ -359,6 +359,11 @@
 	  REAL HALF, SUM, COUNT
 	  COMMON /CONS/ ELMAX,GRAV,PI,R_EARTH,GX,EPS,ZERO,ONE,NUM_GRID,	&
 					NUM_FLT,V_LIMIT,RAD_DEG,RAD_MIN
+                    
+#ifdef DEBUG_CORE
+      CALL SET_ALL(LO)
+      CALL SET_ALL(LA)
+#endif /* DEBUG_CORE */
 
 	  IF (LA%SC_OPTION .EQ. 0) THEN
       HALF = (LA%REL_SIZE*LA%REL_SIZE)/2.0
@@ -392,6 +397,9 @@
 !*			         SUM = SUM+LA%Z(IS,JS,2)
 				     COUNT = COUNT + 1.0
 			      ENDIF
+!                  IF (I .EQ. 392 .AND. J .EQ. 1300) THEN
+!                    WRITE(*,*) II, JJ, LA%Z(II,JJ,2), LA%H(II,JJ), SUM, COUNT 
+!                  ENDIF
 			   ENDDO
 		    ENDDO
             IF (COUNT .GT. HALF) THEN
@@ -404,6 +412,10 @@
 	  ELSE
 	  CALL JNZ_SC (LO,LA)
 	  ENDIF
+
+#ifdef DEBUG_CORE
+      CALL JNZ_DBGLAUNCH(LO%Z(:,:,2), LO%ID, LA%ID)
+#endif /* DEBUG_CORE */
 
       RETURN
       END
@@ -423,6 +435,19 @@
       RETURN
       END
       
+      SUBROUTINE SET_ALL(LL)
+      USE LAYER_PARAMS
+      TYPE (LAYER)		:: LL
+      
+      
+      CALL CUDA_SETZ1(LL%Z(:,:,1), LL%ID)
+      CALL CUDA_SETZ(LL%Z(:,:,2), LL%ID)
+      CALL CUDA_SETMN1(LL%M(:,:,1), LL%N(:,:,1), LL%ID)
+      CALL CUDA_SETMN(LL%M(:,:,2), LL%N(:,:,2), LL%ID)
+      
+      
+      RETURN
+      END
 !-----------------------------------------------------------------------
       SUBROUTINE JNQ (LO,LA)
 !DESCRIPTION:
@@ -446,6 +471,10 @@
     CALL GET_ALL(LO)
     CALL GET_ALL(LA)
 #endif /* DEBUG_ALL_GRID */
+#ifdef DEBUG_CORE
+    CALL SET_ALL(LO)
+    CALL SET_ALL(LA)
+#endif /* DEBUG_CORE */
 
 	  IF (LA%SC_OPTION.EQ.0) THEN
 	  IS = LA%CORNERS(1)
@@ -457,9 +486,9 @@
 	  CALL EDGEINTERP_HORI (LO%N(:,JS-1,1),LO%NX,LA,0) !BOTTOM BOUNDARY
 	  CALL EDGEINTERP_HORI (LO%N(:,JE,1),LO%NX,LA,1)   !TOP BOUNDARY
       
-#ifdef DEBUG_ALL_GRID
-      CALL edgeinterp_dbglaunch(LO%M(:,:,1), LO%N(:,:,1), LO%ID, LA%M(:,:,1), LA%N(:,:,1), LA%ID)
-#endif /* DEBUG_ALL_GRID */
+#if defined(DEBUG_ALL_GRID) || defined(DEBUG_CORE)
+      CALL edgeinterp_dbglaunch(LO%M(:,:,1), LO%N(:,:,1), LO%ID, LA%M(:,:,1), LA%N(:,:,1), LA%ID, 1, LO%YFLUX, LO%XFLUX)
+#endif /* DEBUG_ALL_GRID || DEBUG_CORE */    
       
 	  ELSE
 	  CALL EDGE_INTERP_SC (LO,LA)
@@ -602,11 +631,26 @@
       TYPE (LAYER)		:: LO, LA
 	  INTEGER T
 
+#ifdef DEBUG_ALL_GRID
+      CALL GET_ALL(LO)
+      CALL GET_ALL(LA)
+#endif /* DEBUG_ALL_GRID */
+#ifdef DEBUG_CORE
+    CALL SET_ALL(LO)
+    CALL SET_ALL(LA)
+#endif /* DEBUG_CORE */
+
 	  IF (LA%SC_OPTION .EQ. 0) THEN
       CALL NEWQ_VERT(LO,LA,T,0) ! LEFT BOUNDARY
 	  CALL NEWQ_VERT(LO,LA,T,1) ! RIGHT BOUNDARY
 	  CALL NEWQ_HORI(LO,LA,T,0) ! BOTTOM BOUNDARY
 	  CALL NEWQ_HORI(LO,LA,T,1) ! TOP BOUNDARY
+      
+#if defined(DEBUG_ALL_GRID) || defined(DEBUG_CORE)
+      CALL edgeinterp_dbglaunch(LO%M(:,:,1), LO%N(:,:,1), LO%ID, LA%M(:,:,1), LA%N(:,:,1), LA%ID, T, LO%YFLUX, LO%XFLUX)
+#endif /* DEBUG_ALL_GRID || DEBUG_CORE */      
+
+      
 	  ELSE
 	  CALL NEWQ_SC (LO, LA, T)
 	  ENDIF
@@ -674,6 +718,9 @@
 !*             LO%YFLUX(J) = 0.5*(XM+LO%M(I,J,1))
 !              LO%YFLUX(J) = (T-1.0)/LA%REL_TIME*(XM-LO%M(I,J,1))+LO%M(I,J,1)
 			   LO%YFLUX(J,SIDE+1) = XM
+!               IF (J .EQ. 1412 .AND. SIDE .EQ. 0) THEN
+!                   WRITE(*,*) LO%ID, LA%ID, XM, TOT_N
+!               ENDIF
 			ENDIF
 		    YFLUX(J) = C1*LO%YFLUX(J,SIDE+1) + C2*LO%M(I,J,1)
          END IF

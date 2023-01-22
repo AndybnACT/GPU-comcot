@@ -1,3 +1,4 @@
+#include "debug_option.h"
 !----------------------------------------------------------------------
       SUBROUTINE MOMENT (LO)
 ! ....SOLVE MOMENTUM EQUATION
@@ -11,6 +12,10 @@
       TYPE (LAYER) 	:: LO
 	  COMMON /CONS/ ELMAX,GRAV,PI,R_EARTH,GX,EPS,ZERO,ONE,NUM_GRID,	&
 					NUM_FLT,V_LIMIT,RAD_DEG,RAD_MIN
+
+#ifdef DEBUG_CORE
+      CALL SET_ALL(LO)
+#endif
 
 !.....FOR SPHERICAL COORDINATES
       IF (LO%LAYCORD .EQ. 0) THEN
@@ -48,6 +53,9 @@
 		 END SELECT
 	  ENDIF
 
+#ifdef DEBUG_CORE
+	  CALL MOMT_LAUNCH(LO%M(:,:,2), LO%N(:,:,2), LO%Z(:,:,2), LO%ID)
+#endif
 	  RETURN
 	  END
 
@@ -99,7 +107,7 @@
 			ELSE
 			    L%M(I,J,2) = 0.0
 			END IF
-            ! if ( i .EQ. 448 .AND. j .EQ. 783 ) then
+            ! if ( i .EQ. 1496 .AND. L%ID .EQ. 2 .AND. j .EQ. 50) then
             !     WRITE(*,*) L%R2(I,J), L%R3(I,J),  L%N(I,J,1),  L%N(IP1,J,1), L%N(I,JM1,1), L%N(IP1,JM1,1)
             !     WRITE(*,*) L%M(I,J,1), L%Z(IP1,J,2), L%Z(I,J,2)
             ! end if

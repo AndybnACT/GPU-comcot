@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "debug_option.h"
 #include "cuda.h"
 #include <time.h>
 
@@ -44,6 +45,7 @@
     #define CUDA_KERNEL
     #define ID(row,col) (col)*size_dev[0] + row
     #define ID2E(row,col,dim) size_dev[2]*(dim) + ID(row,col)
+    #define ID_MATRIX(row,col,row_size) ((col)*(row_size) + (row)) 
 #endif
 
 #define MAX_LAYERS 20   
@@ -59,10 +61,14 @@ struct GPU_Layer {
     float *R24_hst, *R35_hst, *H_hst;
     float *R_MASS_hst;
     float *Zmax_hst;
+    float *yflux;
+    float *xflux;
     uint32_t l_size[4];
     float grx;
     float gry;
     
+    dim3 DimGridJnz;
+    dim3 DimBlockJnz;
     dim3 DimGridMomt_MN;
     dim3 DimGridMomt;
     dim3 DimGridMass;
@@ -95,3 +101,48 @@ extern "C" void cuda_update_layer_(int *lid);
     extern uint32_t all_size[MAX_LAYERS][4]; // mirror of all_size_dev
     extern cudaDeviceProp dev_prop;
 #endif
+
+#ifdef RELDIFF
+static inline bool assert_diff(float base, float eval) {
+    if (base == 0.0f) {
+        if (eval != 0.0f)
+            return true;
+        else
+            return false;
+    }
+
+    if (fabs((eval - base) / base) >= DIFFRATE)
+        return true;
+    else
+        return false;
+}
+#else
+static inline bool assert_diff(float base, float eval) {
+    if (fabs(eval - base) >= TOLERANCE)
+        return true;
+    else
+        return false;
+}
+#endif /* RELDIFF */
+
+#define CMP_VAR(cmpp, varp, row, col, str,...) { \
+    for (size_t j = 0; j < col; j++) {                          \
+        for (size_t i = 0; i < row; i++) {                      \
+            size_t id = j*(row) + i;                            \
+            double diff = fabs((cmpp)[id] - (varp)[id]);        \
+            if (assert_diff((cmpp)[id], (varp)[id])) {          \
+                printf(str, __VA_ARGS__);                       \
+                printf("(i,j)=(%zu,%zu), %f %f, diff=%lf  ",    \
+                    i, j, (cmpp)[id], (varp)[id], diff);        \
+                printf("%x, %x\n", *(unsigned int*)((cmpp) + id),\
+                                *(unsigned int*)((varp) + id)); \
+            }                                                   \
+        }                                                       \
+    }                                                           \
+}
+
+static inline bool ispow2(unsigned int val) {
+    // returns true if val is power of 2
+    return !(val & (val - 1));
+} 
+

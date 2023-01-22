@@ -8,7 +8,7 @@
 # General Parameters for Simulation             : Value Field                  |
 #===============================================:===============================
 #Job Description: NZ30sec bathymetry, Spherical Coordinates for code testing
- Total run time (Wall clock, seconds)           :   7200.0
+ Total run time (Wall clock, seconds)           :   86400.0
  Time interval to Save Data    ( unit: sec )    :   1800.0
  Output Zmax & TS (0-Max Z;1-Timeseries;2-Both) :     2
  Start Type (0-Cold start; 1-Hot start)         :     0
@@ -125,33 +125,33 @@
 #===============================================:===============================
 #  Parameters for Sub-level grid -- layer 04    :Values                        |
 #===============================================:===============================
- Run This Layer ?       (0:Yes,       1:No     ):     1
+ Run This Layer ?       (0:Yes,       1:No     ):     0
  Coordinate           (0:spherical, 1:cartesian):     0
  Governing Eqn.       (0:linear,    1:nonlinear):     0
  Bottom Friction Switch? (0:Yes,1:No,2:var. n ) :     1
  Manning's Roughness Coef. (For fric.option=0)  :     0.013
  Layer Ouput Option? (0:Z+Hu+Hv;1:Z Only;2:NONE):     1
  GridSize Ratio of Parent layer to current layer:     16
- X_start                                        :   140.5
- X_end                                          :   142.25
- Y_start                                        :    37.8
- Y_end                                          :    40.0
+ X_start                                        :   143.0
+ X_end                                          :   144.0
+ Y_start                                        :    37.0
+ Y_end                                          :    38.0
  FileName of Water depth data                   :../etopo_halk2.xyz
  Data Format Option (0-OLD;1-MOST;2-XYZ;3-ETOPO):     3
  Grid Identification Number                     :    04
  Grid Level                                     :     3
- Parent Grid's ID Number                        :    02
+ Parent Grid's ID Number                        :    01
 
 #===============================================:===============================
 #  Parameters for Sub-level grid -- layer 05    :Values                        |
 #===============================================:===============================
- Run This Layer ?       (0:Yes,       1:No     ):     1
+ Run This Layer ?       (0:Yes,       1:No     ):     0
  Coordinate           (0:spherical, 1:cartesian):     0
  Governing Eqn.       (0:linear,    1:nonlinear):     0
  Bottom Friction Switch? (0:Yes,1:No,2:var. n ) :     1
  Manning's Roughness Coef. (For fric.option=0)  :     0.013
  Layer Ouput Option? (0:Z+Hu+Hv;1:Z Only;2:NONE):     1
- GridSize Ratio of Parent layer to current layer:     16
+ GridSize Ratio of Parent layer to current layer:     4
  X_start                                        :   120.3092711496687
  X_end                                          :   120.723621321133
  Y_start                                        :    22.1896412622199
@@ -165,9 +165,9 @@
 #===============================================:===============================
 #  Parameters for Sub-level grid -- layer 06    :Values                        |
 #===============================================:===============================
- Run This Layer ?       (0:Yes,       1:No     ):     1
+ Run This Layer ?       (0:Yes,       1:No     ):     0
  Coordinate           (0:spherical, 1:cartesian):     0
- Governing Eqn.       (0:linear,    1:nonlinear):     1
+ Governing Eqn.       (0:linear,    1:nonlinear):     0
  Bottom Friction Switch? (0:Yes,1:No,2:var. n ) :     0
  Manning's Roughness Coef. (For fric.option=0)  :     0.013
  Layer Ouput Option? (0:Z+Hu+Hv;1:Z Only;2:NONE):     1
@@ -185,9 +185,9 @@
 #===============================================:===============================
 #  Parameters for Sub-level grid -- layer 07    :Values                        |
 #===============================================:===============================
- Run This Layer ?       (0:Yes,       1:No     ):     1
+ Run This Layer ?       (0:Yes,       1:No     ):     0
  Coordinate           (0:spherical, 1:cartesian):     0
- Governing Eqn.       (0:linear,    1:nonlinear):     1
+ Governing Eqn.       (0:linear,    1:nonlinear):     0
  Bottom Friction Switch? (0:Yes,1:No,2:var. n ) :     0
  Manning's Roughness Coef. (For fric.option=0)  :     0.013
  Layer Ouput Option? (0:Z+Hu+Hv;1:Z Only;2:NONE):     1
@@ -205,9 +205,9 @@
 #===============================================:===============================
 #  Parameters for Sub-level grid -- layer 08    :Values                        |
 #===============================================:===============================
- Run This Layer ?       (0:Yes,       1:No     ):     1
+ Run This Layer ?       (0:Yes,       1:No     ):     0
  Coordinate           (0:spherical, 1:cartesian):     0
- Governing Eqn.       (0:linear,    1:nonlinear):     1
+ Governing Eqn.       (0:linear,    1:nonlinear):     0
  Bottom Friction Switch? (0:Yes,1:No,2:var. n ) :     0
  Manning's Roughness Coef. (For fric.option=0)  :     0.013
  Layer Ouput Option? (0:Z+Hu+Hv;1:Z Only;2:NONE):     1

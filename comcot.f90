@@ -355,14 +355,10 @@
 		 ENDIF
 
 #ifdef DEBUG_CORE
-         WRITE(*,*) "COMPUTING MASS EQ ON CPU"
-         call system_clock ( t1, trate, tmax )
 		 CALL MASS (LO)
-         call system_clock ( t2, trate, tmax )
-         write ( *, * ) 'Serial Code Elapsed real time = ', real ( t2 - t1 ) / real ( trate )
-         WRITE (*,*) "COMPUTING MASS EQ ON GPU"
+#else /* !DEBUG_CORE */
+	     CALL MASS_LAUNCH(LO%Z(:,:,1),LO%Z(:,:,2),LO%H(:,:), LO%ID)
 #endif /* DEBUG_CORE */
-         CALL MASS_LAUNCH(LO%Z(:,:,1),LO%Z(:,:,2),LO%H(:,:), LO%ID)
 
 !.......SOLVE RADIATION OPEN BOUNDARY
          ! CALL OPEN (LO)
@@ -386,21 +382,20 @@
 !        CALL SUBLAYER COUPLED MODEL
 !//////////////////////////////////////////////////////////////////////
          IF (LO%NUM_CHILD .GE. 1) THEN
-             WRITE(*,*) "[WARNING] THE MULTI-LAYERS FUNCTIONALITY IS CURRENTLY NOT SUPPORTED ON GPU COMCOT"
+#ifdef DEBUG_CORE
              CALL ALL_GRID (LO,LA)
+#else
+             CALL ALL_GRID_LAUNCH()
+#endif
          ENDIF
 !//////////////////////////////////////////////////////////////////////
 !        SOLVE MOMENTUM CONSERVATION EQN FOR LAYER 1
 !//////////////////////////////////////////////////////////////////////
 #ifdef DEBUG_CORE
-         WRITE(*,*) "COMPUTING MOMT EQ ON CPU"
-         call system_clock ( t1, trate, tmax )
          CALL MOMENT (LO)
-         call system_clock ( t2, trate, tmax )
-         write ( *, * ) 'Serial Code Elapsed real time = ', real ( t2 - t1 ) / real ( trate )
-         WRITE(*,*) "COMPUTING MOMT EQ ON GPU"
+#else /* !DEBUG_CORE */
+		 CALL MOMT_LAUNCH(LO%M(:,:,2), LO%N(:,:,2), LO%Z(:,:,2), LO%ID)
 #endif /* DEBUG_CORE */
-         CALL MOMT_LAUNCH(LO%M(:,:,2), LO%N(:,:,2), LO%Z(:,:,2), LO%ID)
 
 !.......USE SPONGE LAYER .....
          IF (BC_TYPE.EQ.1) THEN

@@ -1,3 +1,4 @@
+#include "debug_option.h"
 !----------------------------------------------------------------------
       SUBROUTINE MASS (LO)
 ! ....SOLVE CONTINUITY EQUATION 
@@ -9,6 +10,10 @@
 !----------------------------------------------------------------------
       USE LAYER_PARAMS
       TYPE (LAYER) 	:: LO
+      
+#ifdef DEBUG_CORE
+      CALL SET_ALL(LO)
+#endif
 
 !.....FOR SPHERICAL COORDINATES
       IF (LO%LAYCORD .EQ. 0) THEN
@@ -46,6 +51,9 @@
 		 END SELECT
 	  ENDIF
 
+#ifdef DEBUG_CORE
+	  CALL MASS_LAUNCH(LO%Z(:,:,1),LO%Z(:,:,2),LO%H(:,:), LO%ID)
+#endif
 	  RETURN
 	  END
 

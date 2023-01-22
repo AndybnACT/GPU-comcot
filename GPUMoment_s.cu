@@ -1,5 +1,6 @@
 #include "GPUHeader.h"
 #include "GPUConfig.h"
+#include "debug_option.h"
 
 __global__ void momts_kernel(const float* __restrict__,const float* __restrict__,
                     const float* __restrict__,const float* __restrict__,const float* __restrict__);
@@ -12,17 +13,6 @@ extern "C" void momt_launch_(float *M_f, float *N_f, float *Z_f, const int *lid)
     cudaError_t err;
     struct GPU_Layer *L = ldlayer(*lid);
 
-#ifdef DEBUG
-    printf("Z_cu vs Z_f\n");
-    cudaCHK( cudaMemcpy(tmpout, Zout_hst, L->l_size[3], cudaMemcpyDeviceToHost) );
-    for (size_t i = 0; i < l_size[2]; i++) {
-        if (abs(tmpout[i] - Z_f[i]) > ERROR) {
-            printf("err\n");
-        }
-    }
-    
-#endif /* DEBUG */
-
     st = clock();
     momt_kernelM <<<  L->DimGridMomt_MN, DimBlockMomt_MN, 0, EXECstream[0] >>> (*L);
     momt_kernelN <<<  L->DimGridMomt_MN, DimBlockMomt_MN, 0, EXECstream[1] >>> (*L);
@@ -31,15 +21,42 @@ extern "C" void momt_launch_(float *M_f, float *N_f, float *Z_f, const int *lid)
     cudaERROR(err);
     fi = clock();
 
-#ifdef DEBUG
-    printf("TIME SPENT ON GPU %f\n",(float)(fi-st)/CLOCKS_PER_SEC);
+#ifdef DEBUG_CORE
+    float *mn_cmp;
+    printf("TIME SPENT ON GPU (MOMT->%d) %f\n",(float)(fi-st)/CLOCKS_PER_SEC, L->lid);
     
-#endif /* DEBUG */
+    mn_cmp = (float*) malloc(2*L->l_size[3]);
+    cudaCHK( cudaMemcpy(
+        mn_cmp, L->MNout_hst, 2*L->l_size[3], cudaMemcpyDeviceToHost) );
+
+    CMP_VAR(mn_cmp, M_f, L->l_size[0], L->l_size[1], "(momt-m, layer-id=%d)", L->lid);
+    CMP_VAR(mn_cmp+L->l_size[2], N_f, L->l_size[0], L->l_size[1], "(momt-n, layer-id=%d)", L->lid);
+
+    // for (size_t id = 0; id < L->l_size[2]; id++) {
+    //     if (fabs(mn_cmp[id] - M_f[id]) >= TOLERANCE) {
+    //         printf("(momt-m, layerid=%d) i = %d, %f, %f, diff=%f\n",
+    //             *lid,
+    //             id, 
+    //             mn_cmp[id], M_f[id], 
+    //             fabs(mn_cmp[id] - M_f[id]));
+    //     }
+    // }
+    // for (size_t id = 0; id < L->l_size[2]; id++) {
+    //     if (fabs(mn_cmp[id + L->l_size[2]] - N_f[id]) >= TOLERANCE) {
+    //         printf("(momt-n, layerid=%d) i = %d, %f, %f, diff=%f\n",
+    //             *lid,
+    //             id, 
+    //             mn_cmp[id + L->l_size[2]], N_f[id], 
+    //             fabs(mn_cmp[id + L->l_size[2]] - N_f[id]));
+    //     }
+    // }
+    free(mn_cmp);
+#endif /* DEBUG_CORE */
 
 }
 
-__global__ void momt_kernelM(struct GPU_Layer L) {
-    
+__global__ void momt_kernelM(const struct GPU_Layer L) 
+{    
      const float* __restrict__ Z = L.Zout_hst;
      const float* __restrict__ MN = L.MNdat_hst;
      const float* __restrict__ R2 = L.R24_hst;
@@ -71,19 +88,25 @@ __global__ void momt_kernelM(struct GPU_Layer L) {
      float xm;
      //=====================================================
 
+     // we can simply return since there is no `im1` 
+     if (row == 0 && L.lid != 1)
+         return;
+
      if (row < size_dev[0]) { //lower bound of threads
          n_prev = MN[ID2E(row,col,1)];
          n_ip1jm1_prev = __shfl_down_sync(0xFFFFFFFF, n_prev,1);
-         if (col != 0) col+= 1; // not start at left boundary
+         if (col != 0 || L.lid != 1) col+= 1; // not start at left boundary (consider jm1 at j == 0)
          for (uint32_t j = col; j < col_end; j++) { //grid striding
-             if (threadIdx.x%32 == 31) {
-                 r3 = R3[j];
-             }
-             __syncwarp();
-             r3    = __shfl_sync(0xFFFFFFFF,r3,31);
+             // if (threadIdx.x%32 == 31) {
+             //     r3 = R3[j];
+             // }
+             // __syncwarp();
+             // r3    = __shfl_sync(0xFFFFFFFF,r3,31);
+             r3    = R3[j];
              n     = MN[ID2E(row,j,1)];
              h     = H[ID(row,j)];
              z     = Z[ID(row,j)];
+            // __syncwarp();
 
              n_ip1 = __shfl_down_sync(0xFFFFFFFF, n,1);
              z_ip1 = __shfl_down_sync(0xFFFFFFFF, z,1);
@@ -102,7 +125,7 @@ __global__ void momt_kernelM(struct GPU_Layer L) {
                  }else{
                      MN_out_dev[ID(row,j)] = 0.0f;
                  }
-                 // if (row == 447 && j == 782) {
+                 // if (row == 1495 && L.lid == 2 && j == 50) {
                  //     printf("[%d,%d]===============================[row,j][%d,%d]\n",threadIdx.x,blockIdx.x,row,j );
                  //     printf("%e\t%e\t%e\t%e\t%e\t%e\n",r2,r3,n,n_ip1,n_prev,n_ip1jm1_prev);
                  //     printf("%e\t%e\t%e\n",m,z_ip1,z);
@@ -117,8 +140,8 @@ __global__ void momt_kernelM(struct GPU_Layer L) {
 
 
 
-__global__ void momt_kernelN(struct GPU_Layer L) {
-                                 
+__global__ void momt_kernelN(const struct GPU_Layer L)
+{                                 
     const float* __restrict__ Z = L.Zout_hst;
     const float* __restrict__ MN = L.MNdat_hst;
     const float* __restrict__ R4 = L.R24_hst + L.l_size[2];
@@ -147,8 +170,13 @@ __global__ void momt_kernelN(struct GPU_Layer L) {
     float tot_m;
     float xn;
     //=====================================================
+    bool write = true;
 
-
+    if (L.lid != 1 && row == 0)
+        write = false;
+    
+    if (L.lid != 1 && col == 0)
+        col = 1;
 
     if (row < size_dev[0]) { //lower bound of threads;
         m_jp1_prev = MN[ID(row,col_end)];
@@ -158,14 +186,19 @@ __global__ void momt_kernelN(struct GPU_Layer L) {
         h_jp1_prev = H[ID(row,col_end)];
         // !! bug fixed: note that comparison of unsigned expression >= 0 is always true
         for (int j = (int)col_end-1; j >= (int)col; j--) { //grid striding
-            if (threadIdx.x%32 == 0) {
-                r5 = R5[j];
-            }
-            __syncwarp();
-            r5    = __shfl_sync(0xFFFFFFFF,r5,0);
+            // if (threadIdx.x%32 == 0) {
+            //     r5 = R5[j];
+            // }
+            // __syncwarp();
+            // r5    = __shfl_sync(0xFFFFFFFF,r5,0);
+            r5    = R5[j];
             m     = MN[ID(row,j)];
             h     =  H[ID(row,j)];
             m_im1 = __shfl_up_sync(0xFFFFFFFF,m,1);
+            
+            // if (L.lid != 1 && (row == 0 || j == 0)) {
+            //     write = false;
+            // }
 
             if (threadIdx.x%32 != 0 || row == 0) { //upper bound of lanes
                 r4    = R4[ID(row,j)];
@@ -183,9 +216,11 @@ __global__ void momt_kernelN(struct GPU_Layer L) {
                     // }
 
                     if (xn < EPS && xn > -EPS) xn = 0.0f;
-                    MN_out_dev[ID2E(row,j,1)] = xn;
+                    if (write)
+                        MN_out_dev[ID2E(row,j,1)] = xn;
                 }else{
-                    MN_out_dev[ID2E(row,j,1)] = 0.0f;
+                    if (write)
+                        MN_out_dev[ID2E(row,j,1)] = 0.0f;
                 }
                 m_jp1_prev    = m;
                 m_im1jp1_prev = m_im1;

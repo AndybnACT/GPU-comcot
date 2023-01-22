@@ -1,5 +1,6 @@
 #include "GPUHeader.h"
 #include "GPUConfig.h"
+#include "debug_option.h"
 
 __global__ void mass_kernel(struct GPU_Layer);
 
@@ -17,10 +18,22 @@ extern "C" void mass_launch_(const float* Z_f, float* Z_f_complete, const float 
     cudaERROR(err);
     fi = clock();
 
-#ifdef DEBUG
-    printf("TIME SPENT ON GPU %f\n",(float)(fi-st)/CLOCKS_PER_SEC);
-
-#endif /* DEBUG */
+#ifdef DEBUG_CORE
+    float *z_cmp;
+    printf("TIME SPENT ON GPU (MASS) %f\n",(float)(fi-st)/CLOCKS_PER_SEC);
+    z_cmp = (float*) malloc(L->l_size[3]);
+    cudaCHK( cudaMemcpy(z_cmp, L->Zout_hst, L->l_size[3], cudaMemcpyDeviceToHost) );
+    for (size_t id = 0; id < L->l_size[2]; id++) {
+        if (assert_diff(z_cmp[id], Z_f_complete[id])) {
+            printf("(mass, layerid=%d) i = %d, %f, %f, diff=%f\n",
+                *lid,
+                id, 
+                z_cmp[id], Z_f_complete[id], 
+                fabs(z_cmp[id] - Z_f_complete[id]));
+        }
+    }
+    free(z_cmp);
+#endif /* DEBUG_CORE */
 }
 
 __global__ void mass_kernel(struct GPU_Layer L){
@@ -40,13 +53,23 @@ __global__ void mass_kernel(struct GPU_Layer L){
     //designed for architectures whose warpsize=32
     uint32_t row = blockIdx.x*31*(blockDim.x>>5) + 31*(threadIdx.x>>5) + threadIdx.x%32;
     uint32_t col = blockIdx.y*(size_dev[1]/gridDim.y);
-    uint32_t col_end = (blockIdx.y == gridDim.y-1)? size_dev[1]-1:(blockIdx.y+1)*(size_dev[1]/gridDim.y)+1;
+    uint32_t col_end, row_end;
     float h,z;
     float m, m_suf;
     float n, n_prev;
     float ztmp;
     float r1, r11;
     float r6, r6_prev;
+    
+    if (L.lid == 1) {
+        col_end = (blockIdx.y == gridDim.y-1)? 
+            size_dev[1] - 1:(blockIdx.y+1)*(size_dev[1]/gridDim.y)+1;
+        row_end = size_dev[0]-1;
+    } else {
+        col_end = (blockIdx.y == gridDim.y-1)? 
+            size_dev[1]:(blockIdx.y+1)*(size_dev[1]/gridDim.y)+1;
+        row_end = size_dev[0];
+    }
 
     n_prev = MN[ID2E(row,col,1)];
     r6_prev = R_MASS[col*4+1];
@@ -66,7 +89,7 @@ __global__ void mass_kernel(struct GPU_Layer L){
         z =  Z[ID(row,i)];
         n = MN[ID2E(row,i,1)];
         m_suf = __shfl_up_sync(0xFFFFFFFF,m,1);
-        if (threadIdx.x%32 != 0 && row < size_dev[0]-1) {
+        if (threadIdx.x%32 != 0 && row < row_end) {
             ztmp = z - r1*(m-m_suf) - r11*(n*r6-n_prev*r6_prev);
             if (ztmp + h <= EPS) ztmp = -h;
             if (h <= GX || (ztmp < EPS && -ztmp < EPS) ) ztmp = 0.0;

@@ -57,9 +57,19 @@ extern "C" void cuda_getz1_(float *Z_f, int *lid) {
     cudaCHK( cudaMemcpy(Z_f, L->Zdat_hst, L->l_size[3], cudaMemcpyDeviceToHost) );
 }
 
+extern "C" void cuda_setz1_(float *Z_f, int *lid) {
+    struct GPU_Layer *L = ldlayer(*lid);
+    cudaCHK( cudaMemcpy(L->Zdat_hst, Z_f, L->l_size[3], cudaMemcpyHostToDevice) );
+}
+
 extern "C" void cuda_getz_(float *Z_f, int *lid) {
     struct GPU_Layer *L = ldlayer(*lid);
     cudaCHK( cudaMemcpy(Z_f, L->Zout_hst, L->l_size[3], cudaMemcpyDeviceToHost) );
+}
+
+extern "C" void cuda_setz_(float *Z_f, int *lid) {
+    struct GPU_Layer *L = ldlayer(*lid);
+    cudaCHK( cudaMemcpy(L->Zout_hst, Z_f, L->l_size[3], cudaMemcpyHostToDevice) );
 }
 
 extern "C" void cuda_getmn1_(float *M_f, float *N_f, int *lid) {
@@ -68,10 +78,22 @@ extern "C" void cuda_getmn1_(float *M_f, float *N_f, int *lid) {
     cudaCHK( cudaMemcpy(N_f, L->MNdat_hst+L->l_size[2], L->l_size[3], cudaMemcpyDeviceToHost) );
 }
 
+extern "C" void cuda_setmn1_(float *M_f, float *N_f, int *lid) {
+    struct GPU_Layer *L = ldlayer(*lid);
+    cudaCHK( cudaMemcpy(L->MNdat_hst, M_f, L->l_size[3], cudaMemcpyHostToDevice) );
+    cudaCHK( cudaMemcpy(L->MNdat_hst+L->l_size[2], N_f, L->l_size[3], cudaMemcpyHostToDevice) );
+}
+
 extern "C" void cuda_getmn_(float *M_f, float *N_f, int *lid) {
     struct GPU_Layer *L = ldlayer(*lid);
     cudaCHK( cudaMemcpy(M_f, L->MNout_hst, L->l_size[3], cudaMemcpyDeviceToHost) );
     cudaCHK( cudaMemcpy(N_f, L->MNout_hst+L->l_size[2], L->l_size[3], cudaMemcpyDeviceToHost) );
+}
+
+extern "C" void cuda_setmn_(float *M_f, float *N_f, int *lid) {
+    struct GPU_Layer *L = ldlayer(*lid);
+    cudaCHK( cudaMemcpy(L->MNout_hst, M_f, L->l_size[3], cudaMemcpyHostToDevice) );
+    cudaCHK( cudaMemcpy(L->MNout_hst+L->l_size[2], N_f, L->l_size[3], cudaMemcpyHostToDevice) );
 }
 
 extern "C" void cuda_getzmax_(float *Zmax_f, int *lid) {

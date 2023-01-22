@@ -81,6 +81,10 @@ extern "C" void cuda_alloc_layer(struct GPU_Layer *L, float *R1_f, float *R2_f,
 
     cudaMalloc2E((void**)&L->MNdat_hst, NULL, NULL, L->l_size[3]);
     cudaMalloc2E((void**)&L->MNout_hst, NULL, NULL, L->l_size[3]);
+    cudaCHK( cudaMalloc(&L->xflux, 2*L->l_size[0]*sizeof(float)) );
+    cudaCHK( cudaMemset(L->xflux, 0, 2*L->l_size[0]*sizeof(float)) );
+    cudaCHK( cudaMalloc(&L->yflux, 2*L->l_size[1]*sizeof(float)) );
+    cudaCHK( cudaMemset(L->yflux, 0, 2*L->l_size[1]*sizeof(float)) );
 
     // copy data into variables
     // const variables === H, size ===
@@ -100,6 +104,29 @@ extern "C" void cuda_alloc_layer(struct GPU_Layer *L, float *R1_f, float *R2_f,
     L->DimGridOpenBD_LR = dim3((L->l_size[0]-1)/(31*(BLOCKX_OPENBD>>5)) + 1, 1, 1);
     L->DimGridOpenBD_TB = dim3((L->l_size[1]-1)/(31*(BLOCKX_OPENBD>>5)) + 1, 1, 1);
     L->GridMaxAmp       = (L->l_size[2]-1)/MAXAMP_BLOCK + 1;
+    if (L->lid != 1) {
+        if (L->rel_size > 32 || (!ispow2(L->rel_size)) && L->rel_size > 1) {
+            printf("Error, JNZ kernel only supports grid size ratio of 2,4,8,16,32, input is %d\n", L->rel_size);
+            exit(EXIT_FAILURE);
+        }
+        // the last row and col are not used
+        L->DimBlockJnz = dim3(BLOCKX_JNZ, 1 ,1);
+        L->DimGridJnz = dim3((L->l_size[0] - 1 - 1)/(BLOCKX_JNZ) + 1, (L->l_size[1] - 1 - 1) / LOOPDEPTH + 1, 1);
+    } 
+//    if (L->lid != 1) {
+//        if (L->rel_size < 2 || L->rel_size > 32 ) {
+//            printf("Error, Invalid rel_size=%d for layer_%d\n", 
+//                L->rel_size, L->lid);
+//            exit(EXIT_FAILURE);
+//        }
+//        if (L->rel_size < 8) {
+//            printf("Warning, inefficient rel_size=%d for layer_%d\n",
+//                L->rel_size, L->lid);
+//        }
+//        L->DimBlockJnz = dim3(L->rel_size, L->rel_size, 1);
+//        L->DimGridJnz = dim3(((L->l_size[0] - 1) / L->rel_size) + 1,
+//			     ((L->l_size[1] - 1) / L->rel_size) + 1, 1);
+//    }
     if (L->lid != 1) {
         L->DimGrid_JNQV  = dim3((L->corner[3] - L->corner[2])/(30*BLOCKX_JNQ>>5) + 1, 1, 1);
         L->DimGrid_JNQH  = dim3((L->corner[1] - L->corner[0])/(30*BLOCKX_JNQ>>5) + 1, 1, 1);
