@@ -1137,7 +1137,7 @@
 !	     Z4 = ETAUR*CX*CY
 !	     DAT = Z1+Z2+Z3+Z4
 !
-         CALL GCOMCOT_GET_Z(LA%ID, L1, L2, L3, L4, KI, KJ)
+         CALL GCOMCOT_GET_Z(LA(K)%ID, L1, L2, L3, L4, KI, KJ)
          Z1 = L1*(1.0-CX)*(1.0-CY)
 	     Z2 = L2*(CX)*(1-CY)
 	     Z3 = L3*(1.0-CX)*(CY)
