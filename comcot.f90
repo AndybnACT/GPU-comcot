@@ -219,8 +219,10 @@
 !///// SET UP BOUNDARY CONDITIONS /////////////////////////////////////
 	  IF (BC_TYPE.EQ.1) CALL SPONGE_COEF (LO)
 	  IF (BC_TYPE.EQ.2) CALL BC_WALL (LO,WAVE_INFO)
-	  IF (BC_TYPE.EQ.3) CALL GET_BC_DATA (BCI_INFO,LO)
-
+	  IF (BC_TYPE.EQ.3) THEN
+                  WRITE(*,*) "ERROR, boundary type 3 is no longer supported"
+                  STOP
+          END IF
 !/////DETERMINE STARTING TIME STEP # //////////////////////////////////
 !      WRITE(*,*) START_STEP
 	  START_STEP = NINT(START_TIME/LO%DT)
